@@ -10,6 +10,9 @@ import type {
 import { useApi } from '@/api/request'
 import { encryptLoginRequest } from '@/utils/core/loginEncryption'
 
+/** 与 UserManage/AuthController 的 Route 保持一致。 */
+const AUTH_API_BASE = '/UserManage/Auth'
+
 /** logout 接口的 data 是后端 `new { }` 序列化得到的空对象。 */
 type EmptyAuthResponse = Record<string, never>
 
@@ -20,7 +23,7 @@ function resolveClient(client?: ApiClient): ApiClient {
 
 /** 获取绑定客户端 IP、短时有效且只能消费一次的登录加密挑战。 */
 export function getLoginEncryptionChallenge(client?: ApiClient): Promise<LoginEncryptionChallengeResponse> {
-  return resolveClient(client).get<LoginEncryptionChallengeResponse>('/auth/login-encryption', undefined, {
+  return resolveClient(client).get<LoginEncryptionChallengeResponse>(`${AUTH_API_BASE}/LoginEncryption`, undefined, {
     auth: false,
     retryOnUnauthorized: false,
   })
@@ -38,7 +41,7 @@ export async function login(params: LoginRequest, client?: ApiClient): Promise<A
   const challenge = await getLoginEncryptionChallenge(requestClient)
   const encryptedRequest = await encryptLoginRequest(params, challenge)
 
-  return requestClient.post<AccessTokenResponse, EncryptedLoginRequest>('/auth/login', encryptedRequest, {
+  return requestClient.post<AccessTokenResponse, EncryptedLoginRequest>(`${AUTH_API_BASE}/Login`, encryptedRequest, {
     auth: false,
     retryOnUnauthorized: false,
   })
@@ -50,7 +53,7 @@ export async function login(params: LoginRequest, client?: ApiClient): Promise<A
  * 请求层统一设置 credentials=include；silent 防止后台恢复失败时先弹错再跳登录页。
  */
 export function refreshAccessToken(params: RefreshSessionRequest, client?: ApiClient): Promise<AccessTokenResponse> {
-  return resolveClient(client).post<AccessTokenResponse, RefreshSessionRequest>('/auth/refresh', params, {
+  return resolveClient(client).post<AccessTokenResponse, RefreshSessionRequest>(`${AUTH_API_BASE}/Refresh`, params, {
     auth: false,
     retryOnUnauthorized: false,
     silent: true,
@@ -59,7 +62,7 @@ export function refreshAccessToken(params: RefreshSessionRequest, client?: ApiCl
 
 /** 撤销当前浏览器对应的 Refresh Token Family；成功响应的 data 是空对象。 */
 export function logout(client?: ApiClient): Promise<EmptyAuthResponse> {
-  return resolveClient(client).post<EmptyAuthResponse>('/auth/logout', undefined, {
+  return resolveClient(client).post<EmptyAuthResponse>(`${AUTH_API_BASE}/Logout`, undefined, {
     auth: false,
     retryOnUnauthorized: false,
   })
@@ -72,7 +75,7 @@ export function logout(client?: ApiClient): Promise<EmptyAuthResponse> {
  * 此处不自动刷新，防止在已经持有认证锁时递归申请同一把 Web Lock。
  */
 export function logoutAll(client?: ApiClient, authorization?: string): Promise<EmptyAuthResponse> {
-  return resolveClient(client).post<EmptyAuthResponse>('/auth/logout-all', undefined, {
+  return resolveClient(client).post<EmptyAuthResponse>(`${AUTH_API_BASE}/LogoutAll`, undefined, {
     headers: authorization ? { Authorization: authorization } : undefined,
     retryOnUnauthorized: false,
   })
@@ -80,5 +83,5 @@ export function logoutAll(client?: ApiClient, authorization?: string): Promise<E
 
 /** 使用当前 Bearer Token 获取后端最新的最小会员信息。 */
 export function getCurrentUser(client?: ApiClient): Promise<AuthUser> {
-  return resolveClient(client).get<AuthUser>('/auth/me')
+  return resolveClient(client).get<AuthUser>(`${AUTH_API_BASE}/Me`)
 }

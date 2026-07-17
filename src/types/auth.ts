@@ -18,7 +18,7 @@ export interface LoginRequest extends LoginFormData {
   deviceId: string
 }
 
-/** `GET /api/auth/login-encryption` 返回的一次性加密挑战。 */
+/** `GET /UserManage/Auth/LoginEncryption` 返回的一次性加密挑战。 */
 export interface LoginEncryptionChallengeResponse {
   /** 当前登录 RSA 密钥标识，提交密文时必须原样返回。 */
   keyId: string
@@ -38,7 +38,7 @@ export interface LoginEncryptionChallengeResponse {
   expiresAtUtc: string
 }
 
-/** `POST /api/auth/login` 实际发送的混合加密信封。 */
+/** `POST /UserManage/Auth/Login` 实际发送的混合加密信封。 */
 export interface EncryptedLoginRequest {
   keyId: string
   challenge: string
@@ -52,7 +52,7 @@ export interface EncryptedLoginRequest {
   tag: string
 }
 
-/** `POST /api/auth/refresh` 的请求 DTO。 */
+/** `POST /UserManage/Auth/Refresh` 的请求 DTO。 */
 export interface RefreshSessionRequest {
   /** 必须与创建 Token Family 时一致，否则后端会拒绝并撤销该设备会话。 */
   deviceId: string

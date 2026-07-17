@@ -1,7 +1,27 @@
-// 后端未开放跨域访问，开发环境通过 Nuxt 将同源 /api 请求转发到 UserManage 服务。
-const apiProxyTarget = process.env.NUXT_API_PROXY_TARGET?.replace(/\/+$/, '')
+const normalizeProxyTarget = (target: string | undefined) => target?.replace(/\/+$/, '')
+
+// 后端未开放跨域访问，开发环境通过 Nuxt 按 API 路径转发到对应的微服务。
+const apiProxyTargets = {
+  order: normalizeProxyTarget(process.env.NUXT_ORDER_API_PROXY_TARGET),
+  catalog: normalizeProxyTarget(process.env.NUXT_CATALOG_API_PROXY_TARGET),
+  cart: normalizeProxyTarget(process.env.NUXT_CART_API_PROXY_TARGET),
+  merchant: normalizeProxyTarget(process.env.NUXT_MERCHANT_API_PROXY_TARGET),
+  admin: normalizeProxyTarget(process.env.NUXT_ADMIN_API_PROXY_TARGET),
+  // 兼容原有的单服务变量，已有本地配置无需立即迁移。
+  userManage: normalizeProxyTarget(
+    process.env.NUXT_USER_MANAGE_API_PROXY_TARGET || process.env.NUXT_API_PROXY_TARGET,
+  ),
+}
+
 // Nitro 开发代理会改变后端看到的来源 IP，因此不得作为生产网关使用。
-const shouldProxyApi = process.env.NODE_ENV !== 'production' && Boolean(apiProxyTarget)
+const shouldProxyApi = process.env.NODE_ENV !== 'production'
+
+const createApiProxyRoute = (target: string | undefined, route: string) =>
+  shouldProxyApi && target
+    ? {
+        [route]: { proxy: `${target}${route}` },
+      }
+    : {}
 
 export default defineNuxtConfig({
   // 业务代码统一放在 src 下，保持与 gg.autofinance 相同的源码分层习惯。
@@ -26,21 +46,20 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       // 浏览器始终访问同源地址；服务端真实地址只存在于非 public 的代理配置中。
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/',
     },
   },
   routeRules: {
     // ssr/csr 目录只负责源码分组，实际渲染方式始终按公开 URL 显式声明。
     '/': { ssr: true },
     '/login': { ssr: false },
-    // 只有开发环境认证接口需要经过 Nitro 同源代理。
-    // UserManage 控制器本身以 /api 开头，因此开发代理必须保留该前缀。
-    ...(shouldProxyApi && apiProxyTarget
-      ? {
-          // 当前 target 是 UserManage，只代理认证路径；未来 Catalog 等服务必须单独分流。
-          '/api/auth/**': { proxy: `${apiProxyTarget}/api/auth/**` },
-        }
-      : {}),
+    // 控制器按 WebApi 中的“服务/控制器”路由分组，代理时保留完整路径与大小写。
+    ...createApiProxyRoute(apiProxyTargets.order, '/Order/**'),
+    ...createApiProxyRoute(apiProxyTargets.catalog, '/Catalog/**'),
+    ...createApiProxyRoute(apiProxyTargets.cart, '/Cart/**'),
+    ...createApiProxyRoute(apiProxyTargets.merchant, '/Merchant/**'),
+    ...createApiProxyRoute(apiProxyTargets.admin, '/Admin/**'),
+    ...createApiProxyRoute(apiProxyTargets.userManage, '/UserManage/**'),
   },
   i18n: {
     restructureDir: 'src/i18n',
