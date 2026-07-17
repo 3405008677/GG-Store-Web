@@ -20,7 +20,7 @@ const emit = defineEmits<{
 
 <style lang="scss" scoped>
 .page-container {
-  width: min(1280px, calc(100% - 40px));
+  width: min(var(--mall-content-max, 1800px), calc(100% - var(--mall-page-gutter, 64px)));
   margin: 0 auto;
 }
 
@@ -91,10 +91,6 @@ const emit = defineEmits<{
 }
 
 @media (max-width: 780px) {
-  .page-container {
-    width: min(1280px, calc(100% - 24px));
-  }
-
   .bom-card {
     align-items: flex-start;
     padding: 28px;

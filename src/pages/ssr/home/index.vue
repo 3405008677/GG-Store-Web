@@ -26,6 +26,12 @@ const { userStore } = useStores()
 // 退出按钮状态属于当前页面交互，不写入全局 Store。
 const isLoggingOut = ref(false)
 
+/**
+ * Banner 接口接入点：接口会一次返回 8 张图片 URL。
+ * 收到接口地址后，在页面加载阶段为该数组赋值即可，轮播组件不需要再调整。
+ */
+const bannerUrls = ref<string[]>([])
+
 // 首页反馈复用现有认证语言包，切换语言后提示会同步变化。
 const { t } = useI18n()
 
@@ -74,7 +80,7 @@ async function handleLogout(): Promise<void> {
     />
 
     <main>
-      <HeroSection :user-name="userStore.displayName" />
+      <HeroSection :user-name="userStore.displayName" :banner-urls="bannerUrls" />
       <ActivitySection />
       <BrandSection />
       <ProductSection />
@@ -92,9 +98,17 @@ async function handleLogout(): Promise<void> {
   --mall-text: #253249;
   --mall-muted: #7b8696;
   --mall-border: #e7ebf1;
+  --mall-content-max: 1800px;
+  --mall-page-gutter: clamp(32px, 4vw, 80px);
 
   min-width: 320px;
   color: var(--mall-text);
   background: #f4f6f9;
+}
+
+@media (max-width: 640px) {
+  .mall-home {
+    --mall-page-gutter: 24px;
+  }
 }
 </style>
