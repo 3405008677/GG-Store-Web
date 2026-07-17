@@ -42,7 +42,11 @@ function handleSearch(keyword: string): void {
 
 /** 公共页头和首页 BOM 入口暂时展示接入提示，避免无反馈的空按钮。 */
 function handleHeaderAction(action: HeaderAction): void {
-  ElMessage.info(action === 'bom' ? 'BOM 配单功能即将开放' : '购物车功能即将开放')
+  if (action === 'cart') {
+    void navigateTo('/cart')
+    return
+  }
+  ElMessage.info('BOM 配单功能即将开放')
 }
 
 /**
@@ -93,22 +97,15 @@ async function handleLogout(): Promise<void> {
 
 <style lang="scss" scoped>
 .mall-home {
-  --mall-primary: #1768d7;
-  --mall-primary-dark: #0d55b9;
-  --mall-text: #253249;
-  --mall-muted: #7b8696;
-  --mall-border: #e7ebf1;
-  --mall-content-max: 1800px;
-  --mall-page-gutter: clamp(32px, 4vw, 80px);
+  --mall-primary: var(--mall-color-primary);
+  --mall-primary-dark: var(--mall-color-primary-dark);
+  --mall-text: var(--mall-color-text);
+  --mall-muted: var(--mall-color-muted);
+  --mall-border: var(--mall-color-border);
 
   min-width: 320px;
   color: var(--mall-text);
   background: #f4f6f9;
 }
 
-@media (max-width: 640px) {
-  .mall-home {
-    --mall-page-gutter: 24px;
-  }
-}
 </style>

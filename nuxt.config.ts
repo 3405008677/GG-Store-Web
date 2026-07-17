@@ -27,7 +27,8 @@ export default defineNuxtConfig({
   // 业务代码统一放在 src 下，保持与 gg.autofinance 相同的源码分层习惯。
   compatibilityDate: '2026-07-17',
   srcDir: 'src/',
-  devtools: { enabled: true },
+  // 生产环境关闭开发面板，减少无关客户端代码和运行时监听。
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
   modules: ['@pinia/nuxt', '@nuxtjs/i18n'],
   // 页面私有组件与页面入口共址，但不得被 Nuxt 扫描成独立路由。
   pages: {
@@ -53,6 +54,10 @@ export default defineNuxtConfig({
     // ssr/csr 目录只负责源码分组，实际渲染方式始终按公开 URL 显式声明。
     '/': { ssr: true },
     '/login': { ssr: false },
+    '/register': { ssr: false },
+    // 会员数据依赖浏览器内存中的短效 Token，使用 CSR 可避免输出无数据的 SSR 外壳和重复水合。
+    '/member/**': { ssr: false },
+    '/cart': { ssr: false },
     // 控制器按 WebApi 中的“服务/控制器”路由分组，代理时保留完整路径与大小写。
     ...createApiProxyRoute(apiProxyTargets.order, '/Order/**'),
     ...createApiProxyRoute(apiProxyTargets.catalog, '/Catalog/**'),

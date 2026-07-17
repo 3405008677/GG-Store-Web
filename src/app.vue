@@ -18,7 +18,10 @@ useHead(() => ({
 
 <template>
   <ElConfigProvider :locale="elementLocale">
-    <NuxtLoadingIndicator color="#2f7d68" :height="3" />
-    <NuxtPage />
+    <NuxtLoadingIndicator color="#1768d7" :height="3" />
+    <!-- 页面布局由各路由的 definePageMeta 决定；认证页使用 false，会员页使用 member。 -->
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </ElConfigProvider>
 </template>

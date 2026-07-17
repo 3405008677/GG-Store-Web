@@ -1,17 +1,22 @@
-import type { EncryptedLoginRequest, LoginEncryptionChallengeResponse, LoginRequest } from '@/types/auth'
+import type {
+  EncryptedLoginRequest,
+  LoginEncryptionChallengeResponse,
+  LoginRequest,
+  RegisterRequest,
+} from '@/types/auth'
 import { ApiRequestError } from '@/types/api'
 
-/** 后端固定的登录密钥封装算法。 */
+/** 后端固定的认证密钥封装算法。 */
 const EXPECTED_KEY_ALGORITHM = 'RSA-OAEP-256'
 
-/** 后端固定的登录内容加密算法。 */
+/** 后端固定的认证内容加密算法。 */
 const EXPECTED_CONTENT_ALGORITHM = 'A256GCM'
 
 /** Web Crypto 导入 RSA 公钥时使用的格式。 */
 const EXPECTED_PUBLIC_KEY_FORMAT = 'spki'
 
 /** AAD 必须与后端 LoginRequestEncryptionService 的协议版本完全一致。 */
-const LOGIN_PROTOCOL_PREFIX = 'gg-store-login:v1'
+const AUTH_PROTOCOL_PREFIX = 'gg-store-login:v1'
 
 /** AES-256 密钥长度。 */
 const AES_KEY_SIZE = 32
@@ -22,8 +27,8 @@ const GCM_NONCE_SIZE = 12
 /** 后端固定接收 128 位 GCM 认证标签。 */
 const GCM_TAG_SIZE = 16
 
-/** 后端拒绝超过 8 KiB 的登录明文。 */
-const MAX_LOGIN_PLAINTEXT_SIZE = 8 * 1024
+/** 后端拒绝超过 8 KiB 的认证明文。 */
+const MAX_AUTH_PLAINTEXT_SIZE = 8 * 1024
 
 /** Base64Url 只允许 URL 安全字母，且不包含 `=` 填充。 */
 const BASE64_URL_PATTERN = /^[A-Za-z0-9_-]+$/
@@ -85,7 +90,7 @@ function validateChallenge(challenge: LoginEncryptionChallengeResponse): Uint8Ar
     throw invalidChallengeError()
   }
 
-  const expectedAdditionalData = `${LOGIN_PROTOCOL_PREFIX}:${challenge.keyId}:${challenge.challenge}`
+  const expectedAdditionalData = `${AUTH_PROTOCOL_PREFIX}:${challenge.keyId}:${challenge.challenge}`
   const expiresAt = Date.parse(challenge.expiresAtUtc)
   // 服务端时间才是挑战过期的权威依据；客户端只校验格式，避免终端时钟偏快误拒绝新挑战。
   if (challenge.additionalAuthenticatedData !== expectedAdditionalData || !Number.isFinite(expiresAt)) {
@@ -101,7 +106,7 @@ function validateChallenge(challenge: LoginEncryptionChallengeResponse): Uint8Ar
   return decodeBase64Url(challenge.publicKeySpki)
 }
 
-/** 获取浏览器 Web Crypto；非安全上下文或旧浏览器直接拒绝登录。 */
+/** 获取浏览器 Web Crypto；非安全上下文或旧浏览器直接拒绝认证。 */
 function getBrowserCrypto(): Crypto {
   if (
     globalThis.isSecureContext === false ||
@@ -116,14 +121,14 @@ function getBrowserCrypto(): Crypto {
 }
 
 /**
- * 按商城后端协议构造一次性登录密文信封。
+ * 按商城后端协议构造一次性认证密文信封。
  *
  * 流程为：导入 RSA SPKI 公钥 → 生成 AES-256 密钥与 Nonce → AES-GCM 加密 JSON
  * → 拆分 16 字节认证标签 → RSA-OAEP-SHA256 加密 AES 密钥 → Base64Url 编码。
  * JavaScript 无法可靠擦除字符串，但会在 finally 中尽力清零原始 AES 密钥和 UTF-8 明文字节。
  */
-export async function encryptLoginRequest(
-  request: LoginRequest,
+async function encryptAuthenticationRequest<TPayload extends object>(
+  request: TPayload,
   challenge: LoginEncryptionChallengeResponse,
 ): Promise<EncryptedLoginRequest> {
   const cryptoApi = getBrowserCrypto()
@@ -146,15 +151,9 @@ export async function encryptLoginRequest(
     aesKeyBytes = cryptoApi.getRandomValues(new Uint8Array(AES_KEY_SIZE))
     const aesKey = await cryptoApi.subtle.importKey('raw', aesKeyBytes, { name: 'AES-GCM' }, false, ['encrypt'])
     const nonce = cryptoApi.getRandomValues(new Uint8Array(GCM_NONCE_SIZE))
-    plaintextBytes = new TextEncoder().encode(
-      JSON.stringify({
-        account: request.account,
-        password: request.password,
-        deviceId: request.deviceId,
-      } satisfies LoginRequest),
-    )
+    plaintextBytes = new TextEncoder().encode(JSON.stringify(request))
 
-    if (!plaintextBytes.byteLength || plaintextBytes.byteLength > MAX_LOGIN_PLAINTEXT_SIZE) {
+    if (!plaintextBytes.byteLength || plaintextBytes.byteLength > MAX_AUTH_PLAINTEXT_SIZE) {
       throw invalidChallengeError()
     }
 
@@ -204,4 +203,37 @@ export async function encryptLoginRequest(
     aesKeyBytes?.fill(0)
     plaintextBytes?.fill(0)
   }
+}
+
+/** 加密登录账号、密码和设备标识，避免调用方意外携带页面内部字段。 */
+export function encryptLoginRequest(
+  request: LoginRequest,
+  challenge: LoginEncryptionChallengeResponse,
+): Promise<EncryptedLoginRequest> {
+  return encryptAuthenticationRequest(
+    {
+      account: request.account,
+      password: request.password,
+      deviceId: request.deviceId,
+    } satisfies LoginRequest,
+    challenge,
+  )
+}
+
+/** 加密注册资料和设备标识；确认密码、协议勾选等页面字段不会进入请求。 */
+export function encryptRegisterRequest(
+  request: RegisterRequest,
+  challenge: LoginEncryptionChallengeResponse,
+): Promise<EncryptedLoginRequest> {
+  return encryptAuthenticationRequest(
+    {
+      username: request.username,
+      displayName: request.displayName,
+      email: request.email,
+      phoneNumber: request.phoneNumber,
+      password: request.password,
+      deviceId: request.deviceId,
+    } satisfies RegisterRequest,
+    challenge,
+  )
 }

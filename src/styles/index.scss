@@ -1,6 +1,47 @@
 @use './variables.scss' as *;
 
 :root {
+  color-scheme: light;
+
+  // 商城品牌与反馈色变量。
+  --mall-color-primary: #{$color-primary};
+  --mall-color-primary-dark: #{$color-primary-dark};
+  --mall-color-primary-light: #{$color-primary-light};
+  --mall-color-accent: #{$color-accent};
+  --mall-color-success: #{$color-success};
+  --mall-color-warning: #{$color-warning};
+  --mall-color-danger: #{$color-danger};
+  --mall-color-text: #{$color-text-primary};
+  --mall-color-muted: #{$color-text-secondary};
+  --mall-color-border: #{$color-border};
+  --mall-color-page: #{$color-page-background};
+  --mall-color-surface: #{$color-surface};
+  --mall-color-surface-muted: #f8fafc;
+
+  // 内容宽度和页面留白同时覆盖手机、平板、1K 与 2K 屏幕。
+  --mall-content-max: 1800px;
+  --mall-page-gutter: clamp(32px, 4vw, 80px);
+
+  // 圆角与阴影作为组件外观基线，页面只在必要时覆盖。
+  --mall-radius-small: 4px;
+  --mall-radius-medium: 10px;
+  --mall-radius-large: 16px;
+  --mall-radius-xlarge: 24px;
+  --mall-shadow-card: 0 10px 30px rgb(37 50 73 / 7%);
+  --mall-shadow-elevated: 0 24px 60px rgb(37 50 73 / 10%);
+
+  // Element Plus 映射到相同品牌色，避免各页面控件主题不一致。
+  --el-color-primary: #{$color-primary};
+  --el-color-primary-light-3: #4f8fe2;
+  --el-color-primary-light-5: #7babeb;
+  --el-color-primary-light-7: #b3cef4;
+  --el-color-primary-light-8: #d1e1f8;
+  --el-color-primary-light-9: #edf5ff;
+  --el-color-primary-dark-2: #{$color-primary-dark};
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-color: #{$color-border};
+
   color: $color-text-primary;
   font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -27,6 +68,19 @@ html {
 
 body {
   min-height: 100dvh;
+  overflow-x: hidden;
+  color: var(--mall-color-text);
+  line-height: 1.5;
+  background: var(--mall-color-page);
+}
+
+img,
+svg {
+  display: block;
+}
+
+img {
+  max-width: 100%;
 }
 
 button,
@@ -36,7 +90,39 @@ textarea {
   font: inherit;
 }
 
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(23 104 215 / 24%);
+  outline-offset: 2px;
+}
+
 ::selection {
   color: #fff;
   background: $color-primary;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --mall-page-gutter: 24px;
+  }
+}
+
+// 尊重系统“减少动态效果”设置，降低动画对低性能设备和敏感用户的影响。
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

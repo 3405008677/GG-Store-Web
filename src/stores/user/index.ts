@@ -1,7 +1,13 @@
 import { type ApiClient, useApi } from '@/api/request'
-import type { AccessTokenResponse, AuthUser, LoginFormData } from '@/types/auth'
+import type { AccessTokenResponse, AuthUser, LoginFormData, RegisterFormData } from '@/types/auth'
 import { defineStore } from 'pinia'
-import { login as loginApi, logout as logoutApi, logoutAll as logoutAllApi, refreshAccessToken } from '@/api/login'
+import {
+  login as loginApi,
+  logout as logoutApi,
+  logoutAll as logoutAllApi,
+  refreshAccessToken,
+  register as registerApi,
+} from '@/api/login'
 import { ApiRequestError } from '@/types/api'
 import { runWithAuthMutationLock } from '@/utils/core/authSession'
 import {
@@ -390,6 +396,44 @@ const user = defineStore('user', {
 
         if (runtime.disposed || getAuthSessionEpoch() !== requestEpoch) {
           throw new ApiRequestError('认证状态已在其他页面发生变化，请重新登录', { code: 'AUTH_STATE_CHANGED' })
+        }
+
+        const nextEpoch = advanceAuthSessionEpoch()
+        applySession(this, session, { epoch: nextEpoch })
+        return session.user
+      })
+    },
+
+    /**
+     * 创建会员账号并直接建立当前浏览器会话。
+     *
+     * 页面专用的确认密码和协议勾选不会越过 Store 边界；注册、登录和退出共享同一把跨标签页认证锁，
+     * 防止较晚返回的注册响应覆盖用户在其他页面执行的退出或重新登录。
+     */
+    async register(form: RegisterFormData, client?: ApiClient): Promise<AuthUser> {
+      const requestClient = client || useApi()
+      const runtime = getUserStoreRuntime(this)
+
+      return runWithAuthMutationLock(async () => {
+        if (runtime.disposed) {
+          throw new ApiRequestError('认证状态已在其他页面发生变化，请重新注册', { code: 'AUTH_STATE_CHANGED' })
+        }
+
+        const requestEpoch = getAuthSessionEpoch()
+        const session = await registerApi(
+          {
+            username: form.username.trim(),
+            displayName: form.displayName.trim(),
+            email: form.email.trim(),
+            phoneNumber: form.phoneNumber.trim() || undefined,
+            password: form.password,
+            deviceId: getOrCreateDeviceId(),
+          },
+          requestClient,
+        )
+
+        if (runtime.disposed || getAuthSessionEpoch() !== requestEpoch) {
+          throw new ApiRequestError('认证状态已在其他页面发生变化，请重新注册', { code: 'AUTH_STATE_CHANGED' })
         }
 
         const nextEpoch = advanceAuthSessionEpoch()

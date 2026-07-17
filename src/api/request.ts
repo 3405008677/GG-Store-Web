@@ -20,11 +20,14 @@ type ApiResponseMode = 'api-result' | 'raw'
  * 只翻译已确认的公共错误码；未识别的业务错误仍展示后端 message，避免隐藏有价值的领域信息。
  */
 const API_ERROR_MESSAGES: Readonly<Record<string, readonly [key: string, fallback: string]>> = Object.freeze({
-  AUTH_ENCRYPTED_REQUEST_INVALID: ['communal.loginEncryptionInvalid.text', '登录安全参数无效或已过期，请重试'],
+  AUTH_ENCRYPTED_REQUEST_INVALID: ['communal.loginEncryptionInvalid.text', '安全认证参数无效或已过期，请重试'],
   AUTH_INVALID_CREDENTIALS: ['communal.invalidCredentials.text', '账号或密码错误'],
   AUTH_UNAUTHORIZED: ['communal.sessionExpired.text', '登录状态已失效，请重新登录'],
   AUTH_FORBIDDEN: ['communal.noPermission.text', '没有操作权限'],
   AUTH_TOO_MANY_REQUESTS: ['communal.requestTooFrequent.text', '请求过于频繁，请稍后重试'],
+  REGISTRATION_USERNAME_CONFLICT: ['communal.registrationUsernameConflict.text', '该用户名已被使用'],
+  REGISTRATION_EMAIL_CONFLICT: ['communal.registrationEmailConflict.text', '该电子邮箱已被注册'],
+  REGISTRATION_PHONE_CONFLICT: ['communal.registrationPhoneConflict.text', '该手机号码已被注册'],
   VALIDATION_FAILED: ['communal.validationFailed.text', '提交内容不符合要求'],
 } as const)
 

@@ -36,7 +36,14 @@ const { t } = useI18n()
 const searchKeyword = ref('')
 
 /** 顶部工具栏入口目前用于搭建视觉结构，后续可逐项替换为真实路由。 */
-const utilityLinks = ['我的订单', '我的收藏', '消息中心', '联系客服', '帮助中心', '供应商合作'] as const
+const utilityLinks = [
+  { label: '我的订单', to: '/member/orders' },
+  { label: '我的收藏', to: '/member/favorites' },
+  { label: '消息中心', to: '/#footer-contact' },
+  { label: '联系客服', to: '/#footer-contact' },
+  { label: '帮助中心', to: '/#footer-contact' },
+  { label: '供应商合作', to: '/#footer-contact' },
+] as const
 
 /** 搜索框下方的热门词沿用电子元器件商城常见的快速找料场景。 */
 const hotKeywords = ['STM32', '贴片电阻', '连接器', '电源芯片', '传感器', '开发板'] as const
@@ -80,12 +87,12 @@ function handleSearch(): void {
           </template>
           <template v-else>
             <NuxtLink class="utility-link utility-link--primary" to="/login">登录</NuxtLink>
-            <NuxtLink class="utility-link" to="/login">免费注册</NuxtLink>
+            <NuxtLink class="utility-link" to="/register">免费注册</NuxtLink>
           </template>
         </div>
 
         <nav class="utility-nav" aria-label="会员快捷导航">
-          <a v-for="item in utilityLinks" :key="item" class="utility-link" href="#footer-contact">{{ item }}</a>
+          <NuxtLink v-for="item in utilityLinks" :key="item.label" class="utility-link" :to="item.to">{{ item.label }}</NuxtLink>
         </nav>
       </div>
     </div>
@@ -170,8 +177,8 @@ function handleSearch(): void {
 
 <style lang="scss" scoped>
 .mall-header {
-  --header-primary: #1768d7;
-  --header-primary-dark: #0f54b7;
+  --header-primary: var(--mall-color-primary, #1768d7);
+  --header-primary-dark: var(--mall-color-primary-dark, #0f54b7);
 
   position: relative;
   z-index: 20;
@@ -497,7 +504,8 @@ function handleSearch(): void {
   border: 0;
 }
 
-@media (max-width: 1280px) {
+// 1280px 仍保持品牌、搜索与快捷入口同一行；只有更窄的平板横屏才切换双行布局。
+@media (max-width: 1120px) {
   .main-header__inner {
     grid-template-areas:
       'brand actions'

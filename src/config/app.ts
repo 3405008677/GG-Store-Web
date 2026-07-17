@@ -2,3 +2,4 @@
 export const APP_NAME = '管管商城'
 export const DEFAULT_HOME_PATH = '/'
 export const LOGIN_PATH = '/login'
+export const REGISTER_PATH = '/register'

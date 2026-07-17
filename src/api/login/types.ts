@@ -10,5 +10,7 @@ export type {
   LoginEncryptionChallengeResponse,
   LoginFormData,
   LoginRequest,
+  RegisterFormData,
+  RegisterRequest,
   RefreshSessionRequest,
 } from '@/types/auth'

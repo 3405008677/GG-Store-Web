@@ -5,10 +5,11 @@ import type {
   EncryptedLoginRequest,
   LoginEncryptionChallengeResponse,
   LoginRequest,
+  RegisterRequest,
   RefreshSessionRequest,
 } from '@/types/auth'
 import { useApi } from '@/api/request'
-import { encryptLoginRequest } from '@/utils/core/loginEncryption'
+import { encryptLoginRequest, encryptRegisterRequest } from '@/utils/core/loginEncryption'
 
 /** 与 UserManage/AuthController 的 Route 保持一致。 */
 const AUTH_API_BASE = '/UserManage/Auth'
@@ -42,6 +43,22 @@ export async function login(params: LoginRequest, client?: ApiClient): Promise<A
   const encryptedRequest = await encryptLoginRequest(params, challenge)
 
   return requestClient.post<AccessTokenResponse, EncryptedLoginRequest>(`${AUTH_API_BASE}/Login`, encryptedRequest, {
+    auth: false,
+    retryOnUnauthorized: false,
+  })
+}
+
+/**
+ * 获取一次性挑战、加密注册资料并创建会员账号。
+ *
+ * 注册成功响应与登录一致，同时由后端写入 HttpOnly Refresh Cookie，因此页面可以直接建立会话。
+ */
+export async function register(params: RegisterRequest, client?: ApiClient): Promise<AccessTokenResponse> {
+  const requestClient = resolveClient(client)
+  const challenge = await getLoginEncryptionChallenge(requestClient)
+  const encryptedRequest = await encryptRegisterRequest(params, challenge)
+
+  return requestClient.post<AccessTokenResponse, EncryptedLoginRequest>(`${AUTH_API_BASE}/Register`, encryptedRequest, {
     auth: false,
     retryOnUnauthorized: false,
   })
