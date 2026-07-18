@@ -57,5 +57,13 @@ export default defineNuxtPlugin((nuxtApp) => {
     onSessionExpired: handleSessionExpired,
   })
 
+  if (import.meta.client) {
+    // 首页等公开 SSR 页面不会进入鉴权中间件；等首次水合完成后再通过 HttpOnly
+    // Refresh Cookie 恢复内存会话，既能刷新出会员信息，也不会造成 SSR 水合不一致。
+    nuxtApp.hook('app:mounted', () => {
+      void userStore.ensureSession(api)
+    })
+  }
+
   return { provide: { api } }
 })

@@ -21,7 +21,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path === LOGIN_PATH || to.path === REGISTER_PATH
   const requiresAuth = to.meta.requiresAuth === true
 
-  // 商品浏览等匿名页面不应触发 Refresh Cookie 轮换；登录/注册页例外，用于把已有会话送回原目标。
+  // 公开页面的会话展示由客户端挂载后的启动恢复负责；路由中间件只为认证页和受保护页立即校验。
   if (!isAuthPage && !requiresAuth) return
 
   // 中间件显式传入当前 Nuxt 应用 Pinia，避免依赖全局 active Pinia。
