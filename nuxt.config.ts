@@ -1,5 +1,13 @@
 const normalizeProxyTarget = (target: string | undefined) => target?.replace(/\/+$/, '')
 
+// Windows 下开发服务和生产构建同时写同一个生成目录会触发文件锁。
+// 显式分离目录，也允许 CI 通过环境变量选择临时生成位置。
+const nuxtBuildDir =
+  process.env.NUXT_BUILD_DIR ||
+  (process.env.NODE_ENV === 'production'
+    ? 'node_modules/.cache/nuxt-production/.nuxt'
+    : '.nuxt')
+
 // 后端未开放跨域访问，开发环境通过 Nuxt 按 API 路径转发到对应的微服务。
 const apiProxyTargets = {
   order: normalizeProxyTarget(process.env.NUXT_ORDER_API_PROXY_TARGET),
@@ -26,6 +34,7 @@ const createApiProxyRoute = (target: string | undefined, route: string) =>
 export default defineNuxtConfig({
   // 业务代码统一放在 src 下，保持与 gg.autofinance 相同的源码分层习惯。
   compatibilityDate: '2026-07-17',
+  buildDir: nuxtBuildDir,
   srcDir: 'src/',
   // 生产环境关闭开发面板，减少无关客户端代码和运行时监听。
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
@@ -45,6 +54,8 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
+    // 公开 SSR 请求可通过服务器侧绝对网关地址访问目录服务；浏览器仍保持同源。
+    apiBase: process.env.NUXT_API_BASE || '',
     public: {
       // 浏览器始终访问同源地址；服务端真实地址只存在于非 public 的代理配置中。
       apiBase: process.env.NUXT_PUBLIC_API_BASE || '/',

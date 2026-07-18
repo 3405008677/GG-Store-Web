@@ -5,27 +5,29 @@ import MallHeader from '@/components/common/MallHeader.vue'
 import MemberSidebar from '@/components/member/MemberSidebar.vue'
 import { useStores } from '@/stores'
 import { isApiRequestError } from '@/types/api'
+import { useCartBadge } from '@/utils/cartBadge'
 
 /** 会员布局支持的公共页头快捷操作。 */
-type HeaderAction = 'bom' | 'cart'
+type HeaderAction = 'catalog' | 'cart'
 
 /** 布局只消费认证展示状态，不直接持久化 Token 或 Cookie。 */
 const { userStore } = useStores()
+const { count: cartCount, refresh: refreshCartCount, clear: clearCartCount } = useCartBadge()
 const { t } = useI18n()
 const isLoggingOut = ref(false)
 
-/** 搜索结果页未开放前保留输入反馈。 */
+/** 会员中心页头搜索与公开商城使用同一个真实搜索页。 */
 function handleSearch(keyword: string): void {
-  ElMessage.info(`商品搜索页接入后将为你搜索“${keyword}”`)
+  void navigateTo({ path: '/products', query: { keyword } })
 }
 
-/** 购物车使用真实路由，BOM 接口开放前只给出状态提示。 */
+/** 页头快捷入口统一进入已经接入真实后端的页面。 */
 function handleHeaderAction(action: HeaderAction): void {
   if (action === 'cart') {
     void navigateTo('/cart')
     return
   }
-  ElMessage.info('BOM 配单功能即将开放')
+  void navigateTo('/products')
 }
 
 /** 退出期间锁定页头按钮，并由 Store 完成服务端会话撤销。 */
@@ -34,6 +36,7 @@ async function handleLogout(): Promise<void> {
   isLoggingOut.value = true
 
   try {
+    clearCartCount()
     await userStore.logout()
     ElMessage.success(t('communal.logoutSuccess.text'))
   } catch (error) {
@@ -44,13 +47,23 @@ async function handleLogout(): Promise<void> {
     isLoggingOut.value = false
   }
 }
+
+watch(
+  () => userStore.userInfo?.id,
+  (userId) => {
+    if (!import.meta.client) return
+    if (userId) void refreshCartCount(true).catch(() => undefined)
+    else clearCartCount()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div class="member-shell">
     <MallHeader
       :user-name="userStore.displayName"
-      :cart-count="0"
+      :cart-count="cartCount"
       :logout-pending="isLoggingOut"
       @search="handleSearch"
       @action="handleHeaderAction"

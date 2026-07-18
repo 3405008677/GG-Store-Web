@@ -1,4 +1,5 @@
 import type {
+  ChangePasswordRequest,
   EncryptedLoginRequest,
   LoginEncryptionChallengeResponse,
   LoginRequest,
@@ -56,7 +57,7 @@ function encodeBase64Url(value: Uint8Array): string {
 }
 
 /** 严格解码 canonical Base64Url，拒绝填充、空值和非 URL 安全字符。 */
-function decodeBase64Url(value: unknown): Uint8Array {
+function decodeBase64Url(value: unknown): Uint8Array<ArrayBuffer> {
   if (typeof value !== 'string' || !value || !BASE64_URL_PATTERN.test(value) || value.length % 4 === 1) {
     throw invalidChallengeError()
   }
@@ -77,7 +78,7 @@ function decodeBase64Url(value: unknown): Uint8Array {
 }
 
 /** 检查挑战响应的算法、格式、AAD、长度与时间格式，并返回已解码的 SPKI 公钥。 */
-function validateChallenge(challenge: LoginEncryptionChallengeResponse): Uint8Array {
+function validateChallenge(challenge: LoginEncryptionChallengeResponse): Uint8Array<ArrayBuffer> {
   if (
     !challenge ||
     challenge.keyAlgorithm !== EXPECTED_KEY_ALGORITHM ||
@@ -132,8 +133,8 @@ async function encryptAuthenticationRequest<TPayload extends object>(
   challenge: LoginEncryptionChallengeResponse,
 ): Promise<EncryptedLoginRequest> {
   const cryptoApi = getBrowserCrypto()
-  let aesKeyBytes: Uint8Array | undefined
-  let plaintextBytes: Uint8Array | undefined
+  let aesKeyBytes: Uint8Array<ArrayBuffer> | undefined
+  let plaintextBytes: Uint8Array<ArrayBuffer> | undefined
 
   try {
     const publicKeyBytes = validateChallenge(challenge)
@@ -234,6 +235,20 @@ export function encryptRegisterRequest(
       password: request.password,
       deviceId: request.deviceId,
     } satisfies RegisterRequest,
+    challenge,
+  )
+}
+
+/** 加密当前密码与新密码；确认密码等页面字段不会进入请求。 */
+export function encryptChangePasswordRequest(
+  request: ChangePasswordRequest,
+  challenge: LoginEncryptionChallengeResponse,
+): Promise<EncryptedLoginRequest> {
+  return encryptAuthenticationRequest(
+    {
+      currentPassword: request.currentPassword,
+      newPassword: request.newPassword,
+    } satisfies ChangePasswordRequest,
     challenge,
   )
 }

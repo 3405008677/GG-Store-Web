@@ -2,6 +2,8 @@ import type { ApiClient } from '@/api/request'
 import type {
   AccessTokenResponse,
   AuthUser,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   EncryptedLoginRequest,
   LoginEncryptionChallengeResponse,
   LoginRequest,
@@ -9,7 +11,11 @@ import type {
   RefreshSessionRequest,
 } from '@/types/auth'
 import { useApi } from '@/api/request'
-import { encryptLoginRequest, encryptRegisterRequest } from '@/utils/core/loginEncryption'
+import {
+  encryptChangePasswordRequest,
+  encryptLoginRequest,
+  encryptRegisterRequest,
+} from '@/utils/core/loginEncryption'
 
 /** 与 UserManage/AuthController 的 Route 保持一致。 */
 const AUTH_API_BASE = '/UserManage/Auth'
@@ -62,6 +68,29 @@ export async function register(params: RegisterRequest, client?: ApiClient): Pro
     auth: false,
     retryOnUnauthorized: false,
   })
+}
+
+/**
+ * 获取一次性挑战，加密当前密码和新密码后提交。
+ *
+ * 成功后服务端会撤销全部刷新会话并删除当前 Refresh Cookie；调用方必须立即清理
+ * 本地 Access Token 并引导用户重新登录。
+ */
+export async function changePassword(
+  params: ChangePasswordRequest,
+  client?: ApiClient,
+): Promise<ChangePasswordResponse> {
+  const requestClient = resolveClient(client)
+  const challenge = await getLoginEncryptionChallenge(requestClient)
+  const encryptedRequest = await encryptChangePasswordRequest(params, challenge)
+
+  return requestClient.post<ChangePasswordResponse, EncryptedLoginRequest>(
+    `${AUTH_API_BASE}/ChangePassword`,
+    encryptedRequest,
+    {
+      retryOnUnauthorized: false,
+    },
+  )
 }
 
 /**

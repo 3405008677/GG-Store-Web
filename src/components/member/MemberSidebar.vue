@@ -9,6 +9,9 @@ const { userStore } = useStores()
 
 /** 当前已落地的会员中心路由集中维护，避免模板散落路径。 */
 const memberLinks = [
+  { label: '账户资料', short: '资', to: '/member/profile' },
+  { label: '收货地址', short: '址', to: '/member/addresses' },
+  { label: '账户安全', short: '安', to: '/member/security' },
   { label: '我的订单', short: '订', to: '/member/orders' },
   { label: '我的收藏', short: '藏', to: '/member/favorites' },
   { label: '购物车', short: '车', to: '/cart' },
@@ -166,7 +169,7 @@ const memberLinks = [
   }
 
   .member-navigation {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     padding: 7px;
 

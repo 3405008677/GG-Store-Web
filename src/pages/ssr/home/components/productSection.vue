@@ -1,69 +1,29 @@
 <script setup lang="ts">
-/** 首页推荐商品占位数据。 */
-interface ProductCard {
-  category: string
-  title: string
-  model: string
-  stock: string
-  price: string
-  mark: string
-  tone: string
-  shape: 'chip' | 'board' | 'sensor' | 'connector'
-}
+import type { PublicProductListItemResponse } from '@/api/catalog/types'
 
-/** 推荐商品为首页模板数据，接入商品 API 后应替换为服务端响应。 */
-const products: readonly ProductCard[] = [
+const props = withDefaults(
+  defineProps<{
+    products?: readonly PublicProductListItemResponse[]
+  }>(),
   {
-    category: '微控制器',
-    title: '32 位高性能微控制器',
-    model: 'GG32F103C8T6',
-    stock: '现货 12,680',
-    price: '¥8.60 起',
-    mark: 'MCU',
-    tone: '#2677de',
-    shape: 'chip',
+    products: () => [],
   },
-  {
-    category: '电源管理',
-    title: '同步降压转换芯片',
-    model: 'GGP1584EN',
-    stock: '现货 8,240',
-    price: '¥1.28 起',
-    mark: 'DC',
-    tone: '#654fd4',
-    shape: 'chip',
-  },
-  {
-    category: '开发板',
-    title: '低功耗蓝牙开发板',
-    model: 'GG-NRF52840-DEV',
-    stock: '现货 1,120',
-    price: '¥69.00 起',
-    mark: 'BLE',
-    tone: '#168d84',
-    shape: 'board',
-  },
-  {
-    category: '传感器',
-    title: '数字温湿度传感器',
-    model: 'GG-SHT40',
-    stock: '现货 5,360',
-    price: '¥12.80 起',
-    mark: 'SEN',
-    tone: '#e48b23',
-    shape: 'sensor',
-  },
-  {
-    category: '连接器',
-    title: 'Type-C 16Pin 母座',
-    model: 'GG-TYPEC-16P',
-    stock: '现货 26,400',
-    price: '¥0.48 起',
-    mark: 'USB',
-    tone: '#4c647f',
-    shape: 'connector',
-  },
-]
+)
+
+function formatPriceRange(product: PublicProductListItemResponse): string {
+  const minimum = product.minimumPrice.toLocaleString('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    minimumFractionDigits: 2,
+  })
+  if (product.maximumPrice === product.minimumPrice) return minimum
+  const maximum = product.maximumPrice.toLocaleString('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    minimumFractionDigits: 2,
+  })
+  return `${minimum} – ${maximum}`
+}
 </script>
 
 <template>
@@ -72,33 +32,47 @@ const products: readonly ProductCard[] = [
       <header class="section-heading">
         <div>
           <span>RECOMMENDED PRODUCTS</span>
-          <h2>新品与爆款推荐</h2>
+          <h2>最新可售商品</h2>
         </div>
         <div class="section-tabs" aria-label="商品推荐分类">
-          <button class="is-active" type="button">精选推荐</button>
-          <button type="button">新品上架</button>
-          <button type="button">开发板</button>
-          <button type="button">工业品</button>
+          <NuxtLink class="is-active" :to="{ path: '/products', query: { sort: 3 } }">新品上架</NuxtLink>
+          <NuxtLink :to="{ path: '/products', query: { sort: 1 } }">价格从低到高</NuxtLink>
+          <NuxtLink to="/products">全部商品</NuxtLink>
         </div>
       </header>
 
-      <div class="product-grid">
-        <article v-for="product in products" :key="product.model" class="product-card">
-          <div class="product-card__visual" :style="{ '--product-tone': product.tone }">
-            <span class="product-card__badge">{{ product.category }}</span>
-            <div class="product-shape" :class="`product-shape--${product.shape}`">
-              <span>{{ product.mark }}</span>
-            </div>
+      <div v-if="props.products.length" class="product-grid">
+        <NuxtLink
+          v-for="product in props.products"
+          :key="product.productId"
+          :to="`/products/${product.productId}`"
+          class="product-card"
+        >
+          <div class="product-card__visual">
+            <span class="product-card__badge">{{ product.categoryName }}</span>
+            <img
+              v-if="product.mainImage"
+              :src="product.mainImage"
+              :alt="product.name"
+              loading="lazy"
+              decoding="async"
+            />
+            <strong v-else aria-hidden="true">GG</strong>
           </div>
           <div class="product-card__content">
-            <h3>{{ product.title }}</h3>
-            <p>{{ product.model }}</p>
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.subtitle || product.brandName || product.merchantName }}</p>
             <div class="product-card__meta">
-              <span>{{ product.stock }}</span>
-              <strong>{{ product.price }}</strong>
+              <span>{{ product.availableSkuCount }} 种 SKU</span>
+              <strong>{{ formatPriceRange(product) }}</strong>
             </div>
           </div>
-        </article>
+        </NuxtLink>
+      </div>
+      <div v-else class="product-empty">
+        <strong>暂无可售商品</strong>
+        <span>商品目录没有返回符合公开销售条件的数据。</span>
+        <NuxtLink to="/products">重新浏览商品目录</NuxtLink>
       </div>
     </div>
   </section>
@@ -148,11 +122,14 @@ const products: readonly ProductCard[] = [
   display: flex;
   gap: 5px;
 
-  button {
+  a {
+    display: grid;
+    place-items: center;
     min-height: 32px;
     padding: 0 14px;
     color: #788494;
     font-size: 11px;
+    text-decoration: none;
     background: transparent;
     border: 1px solid transparent;
     border-radius: 3px;
@@ -175,7 +152,10 @@ const products: readonly ProductCard[] = [
 }
 
 .product-card {
+  display: block;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
   background: #fff;
   border-right: 1px solid var(--mall-border);
   border-bottom: 1px solid var(--mall-border);
@@ -189,15 +169,13 @@ const products: readonly ProductCard[] = [
 }
 
 .product-card__visual {
-  --product-tone: #1768d7;
-
   position: relative;
   display: grid;
   place-items: center;
   height: 190px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--product-tone) 11%, transparent), transparent 48%),
+    radial-gradient(circle at 50% 48%, rgb(23 104 215 / 10%), transparent 48%),
     linear-gradient(145deg, #fbfcfe, #f2f5f9);
 
   &::after {
@@ -206,7 +184,7 @@ const products: readonly ProductCard[] = [
     bottom: 12px;
     width: 42px;
     height: 42px;
-    border: 1px solid color-mix(in srgb, var(--product-tone) 18%, transparent);
+    border: 1px solid rgb(23 104 215 / 18%);
     border-radius: 50%;
     content: '';
   }
@@ -217,10 +195,22 @@ const products: readonly ProductCard[] = [
   top: 13px;
   left: 13px;
   padding: 4px 7px;
-  color: var(--product-tone);
+  color: var(--mall-primary);
   font-size: 9px;
-  background: color-mix(in srgb, var(--product-tone) 9%, #fff);
+  background: #edf5ff;
   border-radius: 2px;
+}
+
+.product-card__visual img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.product-card__visual > strong {
+  color: #7f96b5;
+  font-size: 30px;
 }
 
 .product-shape {
@@ -348,8 +338,31 @@ const products: readonly ProductCard[] = [
   }
 
   strong {
+    max-width: 70%;
     color: #ee553a;
-    font-size: 15px;
+    font-size: 12px;
+    text-align: right;
+  }
+}
+
+.product-empty {
+  display: grid;
+  gap: 7px;
+  place-items: center;
+  min-height: 210px;
+  color: var(--mall-muted);
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--mall-border);
+
+  strong {
+    color: var(--mall-text);
+    font-size: 16px;
+  }
+
+  a {
+    margin-top: 8px;
+    color: var(--mall-primary);
   }
 }
 

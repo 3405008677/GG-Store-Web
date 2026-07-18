@@ -1,32 +1,44 @@
 import type {
+  AddCartItemRequest,
   CartDetail,
   CartSummary,
-  CreateCollectionRequest,
+  ClassifiedContainerSelectData,
+  CreateCartRequest,
+  CreateFavoriteListRequest,
   FavoriteListDetail,
   FavoriteListSummary,
+  MergeCartRequest,
+  MergeFavoriteListRequest,
+  UpdateCartRequest,
   UpdateCartItemRequest,
-  UpdateCollectionRequest,
+  UpdateFavoriteListRequest,
 } from './types'
+import type { ApiCallOptions } from '@/api/request'
 import { useApi } from '@/api/request'
 
 /** 获取当前会员的全部有效购物车摘要。 */
-export function listCarts(): Promise<CartSummary[]> {
-  return useApi().get<CartSummary[]>('/Cart/Carts/List')
+export function listCarts(options: ApiCallOptions = {}): Promise<CartSummary[]> {
+  return useApi().get<CartSummary[]>('/Cart/Carts/List', undefined, options)
+}
+
+/** 获取当前会员购物车分类的轻量下拉数据。 */
+export function listCartSelectData(): Promise<ClassifiedContainerSelectData[]> {
+  return useApi().get<ClassifiedContainerSelectData[]>('/Cart/Carts/SelectData')
 }
 
 /** 获取指定购物车及商品明细。 */
 export function getCart(cartId: number): Promise<CartDetail> {
-  return useApi().get<CartDetail>(`/Cart/Carts/Get/${cartId}`)
+  return useApi().get<CartDetail>(`/Cart/Carts/Detail/${cartId}`)
 }
 
 /** 创建一个新的购物车分类。 */
-export function createCart(request: CreateCollectionRequest): Promise<CartDetail> {
-  return useApi().post<CartDetail, CreateCollectionRequest>('/Cart/Carts/Create', request)
+export function createCart(request: CreateCartRequest): Promise<CartDetail> {
+  return useApi().post<CartDetail, CreateCartRequest>('/Cart/Carts/Add', request)
 }
 
 /** 更新购物车名称、说明、默认状态和排序。 */
-export function updateCart(cartId: number, request: UpdateCollectionRequest): Promise<CartDetail> {
-  return useApi().put<CartDetail, UpdateCollectionRequest>(`/Cart/Carts/Update/${cartId}`, request)
+export function updateCart(cartId: number, request: UpdateCartRequest): Promise<CartDetail> {
+  return useApi().put<CartDetail, UpdateCartRequest>(`/Cart/Carts/Edit/${cartId}`, request)
 }
 
 /** 按乐观并发版本归档购物车。 */
@@ -35,6 +47,19 @@ export function archiveCart(cartId: number, expectedVersion: number): Promise<vo
     `/Cart/Carts/Archive/${cartId}`,
     { expectedVersion },
     { responseMode: 'raw' },
+  )
+}
+
+/**
+ * 向指定购物车增量加入一个 SKU。
+ *
+ * operationId 让同一请求可以在 401 刷新后安全重放，不会重复增加数量。
+ */
+export function addCartItem(cartId: number, request: AddCartItemRequest): Promise<CartDetail> {
+  return useApi().post<CartDetail, AddCartItemRequest>(
+    `/Cart/Carts/AddItem/${cartId}`,
+    request,
+    { retryOnUnauthorized: true },
   )
 }
 
@@ -61,7 +86,7 @@ export function deleteCartItem(cartId: number, productSkuId: number): Promise<vo
 
 /** 将源购物车全部商品合并到目标购物车。 */
 export function mergeCarts(sourceCartId: number, targetCartId: number): Promise<CartDetail> {
-  return useApi().post<CartDetail, { targetCartId: number }>(
+  return useApi().post<CartDetail, MergeCartRequest>(
     `/Cart/Carts/Merge/${sourceCartId}`,
     { targetCartId },
   )
@@ -72,15 +97,20 @@ export function listFavoriteLists(): Promise<FavoriteListSummary[]> {
   return useApi().get<FavoriteListSummary[]>('/Cart/FavoriteLists/List')
 }
 
+/** 获取当前会员收藏夹分类的轻量下拉数据。 */
+export function listFavoriteListSelectData(): Promise<ClassifiedContainerSelectData[]> {
+  return useApi().get<ClassifiedContainerSelectData[]>('/Cart/FavoriteLists/SelectData')
+}
+
 /** 获取指定收藏夹及商品明细。 */
 export function getFavoriteList(favoriteListId: number): Promise<FavoriteListDetail> {
-  return useApi().get<FavoriteListDetail>(`/Cart/FavoriteLists/Get/${favoriteListId}`)
+  return useApi().get<FavoriteListDetail>(`/Cart/FavoriteLists/Detail/${favoriteListId}`)
 }
 
 /** 创建新的收藏夹分类。 */
-export function createFavoriteList(request: CreateCollectionRequest): Promise<FavoriteListDetail> {
-  return useApi().post<FavoriteListDetail, CreateCollectionRequest>(
-    '/Cart/FavoriteLists/Create',
+export function createFavoriteList(request: CreateFavoriteListRequest): Promise<FavoriteListDetail> {
+  return useApi().post<FavoriteListDetail, CreateFavoriteListRequest>(
+    '/Cart/FavoriteLists/Add',
     request,
   )
 }
@@ -88,10 +118,10 @@ export function createFavoriteList(request: CreateCollectionRequest): Promise<Fa
 /** 更新收藏夹名称、说明、默认状态和排序。 */
 export function updateFavoriteList(
   favoriteListId: number,
-  request: UpdateCollectionRequest,
+  request: UpdateFavoriteListRequest,
 ): Promise<FavoriteListDetail> {
-  return useApi().put<FavoriteListDetail, UpdateCollectionRequest>(
-    `/Cart/FavoriteLists/Update/${favoriteListId}`,
+  return useApi().put<FavoriteListDetail, UpdateFavoriteListRequest>(
+    `/Cart/FavoriteLists/Edit/${favoriteListId}`,
     request,
   )
 }
@@ -105,6 +135,18 @@ export function archiveFavoriteList(
     `/Cart/FavoriteLists/Archive/${favoriteListId}`,
     { expectedVersion },
     { responseMode: 'raw' },
+  )
+}
+
+/** 将一个商品 SPU 加入指定收藏夹；后端保证重复调用幂等。 */
+export function addFavoriteItem(
+  favoriteListId: number,
+  productId: number,
+): Promise<FavoriteListDetail> {
+  return useApi().put<FavoriteListDetail>(
+    `/Cart/FavoriteLists/AddItem/${favoriteListId}/${productId}`,
+    undefined,
+    { retryOnUnauthorized: true },
   )
 }
 
@@ -125,7 +167,7 @@ export function mergeFavoriteLists(
   sourceFavoriteListId: number,
   targetFavoriteListId: number,
 ): Promise<FavoriteListDetail> {
-  return useApi().post<FavoriteListDetail, { targetFavoriteListId: number }>(
+  return useApi().post<FavoriteListDetail, MergeFavoriteListRequest>(
     `/Cart/FavoriteLists/Merge/${sourceFavoriteListId}`,
     { targetFavoriteListId },
   )

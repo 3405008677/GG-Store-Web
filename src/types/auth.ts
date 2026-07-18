@@ -51,6 +51,27 @@ export interface RegisterRequest {
   deviceId: string
 }
 
+/** 修改密码页面维护的浏览器端字段。 */
+export interface ChangePasswordFormData {
+  /** 当前登录密码，仅短暂保存在页面内存。 */
+  currentPassword: string
+  /** 符合注册密码规则的新密码。 */
+  newPassword: string
+  /** 只用于浏览器端二次确认，不会提交给后端。 */
+  confirmPassword: string
+}
+
+/** 修改密码密文内部的明文载荷；确认密码不会提交。 */
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
+/** 修改密码成功后后端会撤销所有会话，当前值固定为 true。 */
+export interface ChangePasswordResponse {
+  requiresLogin: boolean
+}
+
 /** `GET /UserManage/Auth/LoginEncryption` 返回的一次性加密挑战。 */
 export interface LoginEncryptionChallengeResponse {
   /** 当前登录 RSA 密钥标识，提交密文时必须原样返回。 */

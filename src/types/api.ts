@@ -15,6 +15,14 @@ export interface ApiResult<T = unknown> {
   data: T | null
 }
 
+/** 后端通用分页结果；pageIndex 从 1 开始。 */
+export interface PagedResult<T> {
+  items: T[]
+  total: number
+  pageIndex: number
+  pageSize: number
+}
+
 /** 构造统一请求异常时可附带的诊断信息。 */
 export interface ApiRequestErrorOptions {
   /** 后端业务码或客户端错误码。 */

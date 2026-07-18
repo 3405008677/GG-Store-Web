@@ -12,6 +12,7 @@ import {
   updateCartItem,
 } from '@/api/cart'
 import { isApiRequestError } from '@/types/api'
+import { useCartBadge } from '@/utils/cartBadge'
 
 /** 购物车属于受保护会员页面，统一复用会员中心页头、侧栏和页脚。 */
 definePageMeta({
@@ -43,6 +44,7 @@ const collectionDialogVisible = ref(false)
 const collectionDialogMode = ref<'create' | 'edit'>('create')
 const mergeDialogVisible = ref(false)
 const mergeTargetId = ref<number>()
+const { setCount: setCartBadgeCount } = useCartBadge()
 
 /** 递增序号用于丢弃快速切换分类时较晚返回的旧详情请求。 */
 let detailLoadSequence = 0
@@ -113,6 +115,9 @@ function syncSummary(cart: CartDetail): void {
   summary.totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0)
   summary.version = cart.version
   summary.updatedAt = cart.updatedAt
+  setCartBadgeCount(
+    carts.value.reduce((total, item) => total + item.totalQuantity, 0),
+  )
 }
 
 /** 加载指定购物车详情，并忽略快速切换产生的过期响应。 */
@@ -139,6 +144,9 @@ async function loadCarts(preferredId?: number): Promise<void> {
   isListLoading.value = true
   try {
     carts.value = await listCarts()
+    setCartBadgeCount(
+      carts.value.reduce((total, item) => total + item.totalQuantity, 0),
+    )
     const targetId =
       carts.value.find((item) => item.id === preferredId)?.id ??
       carts.value.find((item) => item.id === selectedId.value)?.id ??
@@ -153,6 +161,7 @@ async function loadCarts(preferredId?: number): Promise<void> {
     }
   } catch (error) {
     carts.value = []
+    setCartBadgeCount(0)
     detail.value = undefined
     showError(error)
   } finally {

@@ -29,9 +29,9 @@ const { t } = useI18n()
         <h1 id="auth-brand-title">{{ t('communal.appName.text') }}</h1>
         <p class="brand-subtitle">{{ t('communal.brandSubtitle.text') }}</p>
         <div class="brand-benefits" aria-label="平台特点">
-          <span>正品保障</span>
-          <span>一站式采购</span>
-          <span>会员专属服务</span>
+          <span>实时商品目录</span>
+          <span>分类购物车</span>
+          <span>安全会话管理</span>
         </div>
       </div>
       <div class="brand-panel__shape brand-panel__shape--one" aria-hidden="true" />

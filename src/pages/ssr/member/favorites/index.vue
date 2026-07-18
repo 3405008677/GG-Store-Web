@@ -15,6 +15,7 @@ import {
   updateFavoriteList,
 } from '@/api/cart'
 import { isApiRequestError } from '@/types/api'
+import { parseApiDateTime } from '@/utils/apiDateTime'
 
 /** 收藏夹属于受保护会员页面，数据访问始终携带当前会员 Bearer Token。 */
 definePageMeta({
@@ -68,6 +69,16 @@ function showError(error: unknown): void {
   if (!isApiRequestError(error) || !error.isShown) {
     ElMessage.error(error instanceof Error ? error.message : '操作失败，请稍后重试')
   }
+}
+
+function formatDateTime(value: string): string {
+  const date = parseApiDateTime(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('zh-CN')
+}
+
+function formatDate(value: string): string {
+  const date = parseApiDateTime(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('zh-CN')
 }
 
 /** 加载指定收藏夹详情，并忽略用户快速切换产生的过期响应。 */
@@ -323,7 +334,7 @@ onMounted(() => void loadLists())
           <div class="detail-meta">
             <span>共 <strong>{{ detail.items.length }}</strong> 件商品</span>
             <span>版本 {{ detail.version }}</span>
-            <span>更新于 {{ new Date(detail.updatedAt).toLocaleString('zh-CN') }}</span>
+            <span>更新于 {{ formatDateTime(detail.updatedAt) }}</span>
           </div>
 
           <div v-if="detail.items.length" class="favorite-grid">
@@ -349,7 +360,7 @@ onMounted(() => void loadLists())
               <div class="favorite-card__body">
                 <h3>{{ item.productName }}</h3>
                 <p>商品编号：{{ item.productId }}</p>
-                <small>收藏于 {{ new Date(item.createdAt).toLocaleDateString('zh-CN') }}</small>
+                <small>收藏于 {{ formatDate(item.createdAt) }}</small>
               </div>
               <button
                 class="favorite-card__remove"

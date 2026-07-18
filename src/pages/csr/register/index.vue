@@ -84,7 +84,11 @@ const validatePassword: NonNullable<FormItemRule['validator']> = (_rule, value, 
     callback(new Error('密码长度应为 8–128 个字符'))
     return
   }
-  if (!/\p{L}/u.test(password) || !/\p{N}/u.test(password) || /\p{Cc}/u.test(password)) {
+  if (
+    !/\p{L}/u.test(password) ||
+    !/\p{Decimal_Number}/u.test(password) ||
+    /\p{Cc}/u.test(password)
+  ) {
     callback(new Error('密码至少包含一个字母和一个数字，且不能含控制字符'))
     return
   }

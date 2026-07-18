@@ -6,6 +6,9 @@
 export type {
   AccessTokenResponse,
   AuthUser,
+  ChangePasswordFormData,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   EncryptedLoginRequest,
   LoginEncryptionChallengeResponse,
   LoginFormData,

@@ -1,4 +1,3 @@
-import type { FetchOptions } from 'ofetch'
 import type { ApiResult } from '@/types/api'
 import { ApiRequestError } from '@/types/api'
 
@@ -80,6 +79,13 @@ export interface ApiClientOptions {
   baseURL: string
   /** 返回完整 Authorization 值，例如 `Bearer ey...`。 */
   getAuthorization: () => string
+  /**
+   * 在受保护写操作发出前确保短效 Access Token 仍然可用。
+   *
+   * GET 可以在 401 后安全刷新并重放；POST、PUT、PATCH、DELETE 默认不能重放，
+   * 因此必须在发送前完成会话恢复。
+   */
+  prepareSession?: () => Promise<boolean>
   /**
    * 轮换 Refresh Cookie 并更新 Store；参数是本次 401 实际使用的 Authorization，
    * Store 据此区分“其他请求已刷新”和“同一个旧 Token 尚未到本地过期时间”。
@@ -263,32 +269,78 @@ export function createApiClient(clientOptions: ApiClientOptions): ApiClient {
     const configuredHeaders = new Headers(options.headers)
     const usesManagedAuthorization = options.auth !== false && !configuredHeaders.has('Authorization')
     const canReplayAfterRefresh = options.retryOnUnauthorized ?? method === 'GET'
-    const headers = createHeaders(options)
-    const requestAuthorization = headers.get('Authorization') || ''
+    let requestAuthorization = ''
+    let preparationRejected = false
+    let preparationConfirmedExpired = false
 
     try {
-      const fetchOptions: FetchOptions<'json'> = {
+      // 受保护写操作默认不可在 401 后重放。先通过 Store 检查有效期并按需轮换
+      // Refresh Cookie，避免页面长时间停留后第一次写入使用已经过期的 Bearer。
+      if (
+        usesManagedAuthorization &&
+        method !== 'GET' &&
+        !hasRetried &&
+        clientOptions.prepareSession
+      ) {
+        const prepared = await clientOptions.prepareSession()
+        if (!prepared && !clientOptions.getAuthorization()) {
+          preparationRejected = true
+          preparationConfirmedExpired =
+            clientOptions.isSessionRefreshBlocked?.() ?? false
+          throw new ApiRequestError(
+            preparationConfirmedExpired
+              ? translate('communal.sessionExpired.text', '登录状态已失效，请重新登录')
+              : '暂时无法确认登录状态，请检查网络后重试',
+            {
+              code: preparationConfirmedExpired
+                ? 'AUTH_UNAUTHORIZED'
+                : 'AUTH_SESSION_UNAVAILABLE',
+              statusCode: preparationConfirmedExpired ? 401 : undefined,
+            },
+          )
+        }
+      }
+
+      const headers = createHeaders(options)
+      requestAuthorization = headers.get('Authorization') || ''
+      const response = await fetcher<unknown>(url, {
         method,
         query: options.query,
-        body: options.body as FetchOptions<'json'>['body'],
+        // 业务 API 仍以 unknown 保持泛型边界；这里收窄为 ofetch 可接受的 JSON/BodyInit。
+        body: options.body as BodyInit | Record<string, unknown> | null | undefined,
         headers,
         signal: options.signal,
-      }
-      const response = await fetcher<unknown>(url, fetchOptions)
+      })
       return unwrapResponse<T>(response, options.responseMode || 'api-result')
     } catch (error) {
       const fetchError = (error || {}) as FetchLikeError
       const statusCode = error instanceof ApiRequestError ? error.statusCode : fetchError.response?.status
       const currentAuthorization = clientOptions.getAuthorization()
       const hasNewAuthorization =
-        statusCode === 401 && usesManagedAuthorization && canReplayAfterRefresh && !hasRetried && Boolean(currentAuthorization) && currentAuthorization !== requestAuthorization
+        statusCode === 401 &&
+        usesManagedAuthorization &&
+        !hasRetried &&
+        Boolean(currentAuthorization) &&
+        currentAuthorization !== requestAuthorization
 
       if (hasNewAuthorization) {
-        // 其他并发请求已经完成刷新，本请求直接使用新 Token 重放，不能再次轮换 Refresh Cookie。
-        return execute<T>(url, options, true)
+        // 其他并发请求已经完成刷新。幂等请求可直接重放；非幂等写操作交由用户确认重试。
+        if (canReplayAfterRefresh) return execute<T>(url, options, true)
+        throw normalizeError(
+          new ApiRequestError('登录状态已恢复，请重新提交本次操作', {
+            code: 'AUTH_RETRY_REQUIRED',
+            statusCode: 401,
+            cause: error,
+          }),
+          options.silent ?? false,
+        )
       }
 
-      const canRefresh = statusCode === 401 && usesManagedAuthorization && canReplayAfterRefresh && !hasRetried
+      const canRefresh =
+        statusCode === 401 &&
+        usesManagedAuthorization &&
+        !hasRetried &&
+        !preparationRejected
 
       if (canRefresh && clientOptions.refreshSession) {
         // Store 内部使用 single-flight，多个并发 401 会共享同一次 Refresh Token 轮换。
@@ -298,16 +350,29 @@ export function createApiClient(clientOptions: ApiClientOptions): ApiClient {
         } catch {
           // 刷新回调异常按“恢复失败”处理，最终仍归一化并抛出原始 401。
         }
-        if (refreshed) return execute<T>(url, options, true)
+        if (refreshed) {
+          if (canReplayAfterRefresh) return execute<T>(url, options, true)
+          throw normalizeError(
+            new ApiRequestError('登录状态已恢复，请重新提交本次操作', {
+              code: 'AUTH_RETRY_REQUIRED',
+              statusCode: 401,
+              cause: error,
+            }),
+            options.silent ?? false,
+          )
+        }
       }
 
-      // 未授权写操作若未声明可重放，只向调用方抛错；后续安全请求仍有机会刷新会话。
-      // 只有已进入刷新链路并最终失败的请求，才确认会话失效并跳转登录页。
+      // 预检确认 Cookie 已失效，或 401 恢复链路最终失败时，才清理并跳转登录页。
+      // 网络退避不会误判成退出。
       const shouldExpireSession =
         statusCode === 401 &&
         usesManagedAuthorization &&
-        canReplayAfterRefresh &&
-        (hasRetried || (clientOptions.isSessionRefreshBlocked?.() ?? true))
+        (
+          preparationConfirmedExpired ||
+          hasRetried ||
+          (canRefresh && (clientOptions.isSessionRefreshBlocked?.() ?? true))
+        )
       if (shouldExpireSession) await clientOptions.onSessionExpired?.()
       throw normalizeError(error, options.silent ?? false)
     }
