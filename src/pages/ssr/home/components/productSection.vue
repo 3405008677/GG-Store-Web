@@ -137,8 +137,8 @@ function formatPriceRange(product: PublicProductListItemResponse): string {
 
     &.is-active {
       color: var(--mall-primary);
-      background: #edf5ff;
-      border-color: #cfe2f8;
+      background: var(--mall-color-primary-light);
+      border-color: var(--mall-color-primary-border);
     }
   }
 }
@@ -197,7 +197,7 @@ function formatPriceRange(product: PublicProductListItemResponse): string {
   padding: 4px 7px;
   color: var(--mall-primary);
   font-size: 9px;
-  background: #edf5ff;
+  background: var(--mall-color-primary-light);
   border-radius: 2px;
 }
 

@@ -39,6 +39,9 @@ const isSaving = ref(false)
 const loadFailed = ref(false)
 const avatarLoadFailed = ref(false)
 const today = new Date().toISOString().slice(0, 10)
+const earliestBirthday = new Date(1900, 0, 1)
+const endOfToday = new Date()
+endOfToday.setHours(23, 59, 59, 999)
 
 const form = reactive<ProfileForm>({
   displayName: '',
@@ -118,6 +121,11 @@ function isSafeAvatarUrl(value: string): boolean {
 
 function clearErrors(): void {
   for (const key of Object.keys(fieldErrors) as ProfileField[]) fieldErrors[key] = ''
+}
+
+/** 日期选择器与后端约束保持一致，避免用户选中无效生日后才收到错误。 */
+function isBirthdayDisabled(date: Date): boolean {
+  return date < earliestBirthday || date > endOfToday
 }
 
 /** 在提交前复现后端的 NFKC、Unicode 长度、日期和安全 URL 约束。 */
@@ -358,14 +366,17 @@ onMounted(() => void loadProfile())
 
             <div class="form-field">
               <label for="profile-birthday">生日</label>
-              <input
+              <ElDatePicker
                 id="profile-birthday"
                 v-model="form.birthday"
-                class="native-input"
+                class="full-width"
                 type="date"
-                min="1900-01-01"
-                :max="today"
-                @input="fieldErrors.birthday = ''"
+                value-format="YYYY-MM-DD"
+                format="YYYY-MM-DD"
+                placeholder="选择生日"
+                clearable
+                :disabled-date="isBirthdayDisabled"
+                @change="fieldErrors.birthday = ''"
               />
               <small v-if="fieldErrors.birthday" class="field-error">{{ fieldErrors.birthday }}</small>
             </div>
@@ -428,7 +439,7 @@ onMounted(() => void loadProfile())
   justify-content: space-between;
   min-height: 116px;
   padding: 24px 28px;
-  background: linear-gradient(110deg, #fff, #f4f9ff);
+  background: linear-gradient(110deg, #fff, var(--mall-color-primary-light));
 
   span,
   .section-heading span {
@@ -550,8 +561,8 @@ onMounted(() => void loadProfile())
   color: #fff;
   font-size: 30px;
   font-weight: 800;
-  background: linear-gradient(145deg, #5ca5f3, var(--mall-color-primary));
-  border: 7px solid #e9f3ff;
+  background: linear-gradient(145deg, var(--mall-color-accent), var(--mall-color-primary));
+  border: 7px solid var(--mall-color-primary-soft);
   border-radius: 50%;
 
   img {
@@ -567,7 +578,7 @@ onMounted(() => void loadProfile())
   color: #64748b !important;
   line-height: 1.65;
   text-align: left;
-  background: #f7f9fc;
+  background: var(--mall-color-surface-muted);
   border-radius: 6px;
 }
 
@@ -637,23 +648,6 @@ onMounted(() => void loadProfile())
 
 .full-width {
   width: 100%;
-}
-
-.native-input {
-  width: 100%;
-  height: 32px;
-  padding: 0 11px;
-  color: var(--mall-color-text);
-  font: inherit;
-  background: #fff;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  outline: none;
-
-  &:focus {
-    border-color: var(--mall-color-primary);
-    box-shadow: 0 0 0 1px var(--mall-color-primary) inset;
-  }
 }
 
 .form-actions {

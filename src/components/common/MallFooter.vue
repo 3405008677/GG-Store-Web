@@ -155,11 +155,11 @@ const linkGroups: readonly FooterLinkGroup[] = [
   place-items: center;
   width: 46px;
   height: 46px;
-  color: #1768d7;
+  color: var(--mall-color-primary);
   font-size: 17px;
   font-weight: 800;
-  background: #eef6ff;
-  border: 1px solid #cfe3fb;
+  background: var(--mall-color-primary-light);
+  border: 1px solid var(--mall-color-primary-border);
   border-radius: 50%;
 }
 
@@ -198,7 +198,7 @@ const linkGroups: readonly FooterLinkGroup[] = [
     transition: color 160ms ease;
 
     &:hover {
-      color: #1768d7;
+      color: var(--mall-color-primary);
     }
   }
 }
@@ -224,7 +224,7 @@ const linkGroups: readonly FooterLinkGroup[] = [
 .contact-card__phone {
   display: block;
   margin: 7px 0 10px;
-  color: #1768d7;
+  color: var(--mall-color-primary);
   font-size: 22px;
   letter-spacing: 0.01em;
 }

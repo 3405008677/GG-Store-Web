@@ -799,7 +799,7 @@ onMounted(() => void loadAddresses())
   justify-content: space-between;
   min-height: 116px;
   padding: 24px 28px;
-  background: linear-gradient(110deg, #fff, #f5f9ff);
+  background: linear-gradient(110deg, #fff, var(--mall-color-primary-light));
 
   > div > span {
     color: var(--mall-color-primary);
@@ -886,8 +886,8 @@ onMounted(() => void loadAddresses())
 }
 
 .address-card--default {
-  background: linear-gradient(110deg, #fff, #f7fbff);
-  border-color: #b8d3f8;
+  background: linear-gradient(110deg, #fff, var(--mall-color-primary-light));
+  border-color: var(--mall-color-primary-border);
 }
 
 .address-card__select {

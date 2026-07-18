@@ -95,8 +95,8 @@ const activityCards: readonly ActivityCard[] = [
 }
 
 .activity-card {
-  --activity-color: #1768d7;
-  --activity-light: #ecf5ff;
+  --activity-color: var(--mall-color-primary);
+  --activity-light: var(--mall-color-primary-light);
 
   position: relative;
   min-height: 168px;

@@ -148,7 +148,7 @@ watch(
 
   min-width: 320px;
   color: var(--mall-text);
-  background: #f4f6f9;
+  background: var(--mall-color-page);
 }
 
 </style>

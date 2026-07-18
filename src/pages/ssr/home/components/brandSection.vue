@@ -119,8 +119,9 @@ const visibleBrands = computed(() => props.brands.slice(0, 12))
   &:hover {
     z-index: 2;
     color: var(--mall-primary);
-    background: #f8fbff;
+    background: var(--mall-color-primary-light);
     box-shadow: 0 10px 24px rgb(43 67 99 / 8%);
+    transform: translateY(-2px);
   }
 
   > span {

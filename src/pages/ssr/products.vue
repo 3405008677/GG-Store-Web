@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElPagination } from 'element-plus'
 import type {
   ProductBrandSelectItemResponse,
   ProductCategorySelectItemResponse,
@@ -89,9 +89,12 @@ const { count: cartCount, refresh: refreshCartCount, clear: clearCartCount } = u
 const isLoggingOut = ref(false)
 const openingProductId = ref<number>()
 const priceValidationMessage = ref('')
-const priceDraft = reactive({
-  minimum: '',
-  maximum: '',
+const priceDraft = reactive<{
+  minimum: number | undefined
+  maximum: number | undefined
+}>({
+  minimum: undefined,
+  maximum: undefined,
 })
 
 function firstQueryValue(value: unknown): string {
@@ -166,8 +169,8 @@ const dynamicSignature = computed(() => [
 watch(
   () => [route.query.minimumPrice, route.query.maximumPrice],
   () => {
-    priceDraft.minimum = firstQueryValue(route.query.minimumPrice)
-    priceDraft.maximum = firstQueryValue(route.query.maximumPrice)
+    priceDraft.minimum = parsePrice(route.query.minimumPrice)
+    priceDraft.maximum = parsePrice(route.query.maximumPrice)
     priceValidationMessage.value = ''
   },
   { immediate: true },
@@ -368,24 +371,23 @@ function handleSearch(searchKeyword: string): void {
   })
 }
 
-function handleCategoryChange(event: Event): void {
-  const value = Number((event.target as HTMLSelectElement).value)
+function handleCategoryChange(value: string | number | undefined): void {
+  const numericValue = Number(value)
   void updateRouteQuery({
-    categoryId: Number.isSafeInteger(value) && value > 0 ? value : undefined,
+    categoryId: Number.isSafeInteger(numericValue) && numericValue > 0 ? numericValue : undefined,
     page: undefined,
   })
 }
 
-function handleBrandChange(event: Event): void {
-  const value = Number((event.target as HTMLSelectElement).value)
+function handleBrandChange(value: string | number | undefined): void {
+  const numericValue = Number(value)
   void updateRouteQuery({
-    brandId: Number.isSafeInteger(value) && value > 0 ? value : undefined,
+    brandId: Number.isSafeInteger(numericValue) && numericValue > 0 ? numericValue : undefined,
     page: undefined,
   })
 }
 
-function handleSortChange(event: Event): void {
-  const value = Number((event.target as HTMLSelectElement).value) as PublicProductSort
+function handleSortChange(value: PublicProductSort): void {
   void updateRouteQuery({
     sort: value === PublicProductSort.Default ? undefined : value,
     page: undefined,
@@ -393,8 +395,8 @@ function handleSortChange(event: Event): void {
 }
 
 function applyPriceFilter(): void {
-  const minimum = priceDraft.minimum.trim() ? Number(priceDraft.minimum) : undefined
-  const maximum = priceDraft.maximum.trim() ? Number(priceDraft.maximum) : undefined
+  const minimum = priceDraft.minimum
+  const maximum = priceDraft.maximum
   if (
     (minimum != null && (!Number.isFinite(minimum) || minimum < 0)) ||
     (maximum != null && (!Number.isFinite(maximum) || maximum < 0))
@@ -416,8 +418,8 @@ function applyPriceFilter(): void {
 }
 
 function resetAllFilters(): void {
-  priceDraft.minimum = ''
-  priceDraft.maximum = ''
+  priceDraft.minimum = undefined
+  priceDraft.maximum = undefined
   priceValidationMessage.value = ''
   void navigateTo('/products')
 }
@@ -440,8 +442,7 @@ function handlePageChange(value: number): void {
   if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-function handlePageSizeChange(event: Event): void {
-  const value = Number((event.target as HTMLSelectElement).value)
+function handlePageSizeChange(value: number): void {
   if (!pageSizeOptions.includes(value as (typeof pageSizeOptions)[number])) return
   void updateRouteQuery({
     pageSize: value === DEFAULT_PAGE_SIZE ? undefined : value,
@@ -604,17 +605,23 @@ watch(
 
             <div class="filter-field">
               <label for="catalog-category">商品类目</label>
-              <select
+              <ElSelect
                 id="catalog-category"
-                :value="categoryId ?? ''"
+                class="control-full"
+                :model-value="categoryId"
                 :disabled="optionPending"
+                placeholder="全部类目"
+                clearable
+                filterable
                 @change="handleCategoryChange"
               >
-                <option value="">全部类目</option>
-                <option v-for="item in categories" :key="item.value" :value="item.value">
-                  {{ categoryOptionLabel(item) }}
-                </option>
-              </select>
+                <ElOption
+                  v-for="item in categories"
+                  :key="item.value"
+                  :label="categoryOptionLabel(item)"
+                  :value="item.value"
+                />
+              </ElSelect>
               <small v-if="selectedCategory">当前：{{ selectedCategory.label }}</small>
               <p v-if="optionData?.categoryError" class="field-error">{{ optionData.categoryError }}</p>
             </div>
@@ -622,17 +629,23 @@ watch(
             <template v-if="!isSearchMode">
               <div class="filter-field">
                 <label for="catalog-brand">商品品牌</label>
-                <select
+                <ElSelect
                   id="catalog-brand"
-                  :value="brandId ?? ''"
+                  class="control-full"
+                  :model-value="brandId"
                   :disabled="optionPending"
+                  placeholder="全部品牌"
+                  clearable
+                  filterable
                   @change="handleBrandChange"
                 >
-                  <option value="">全部品牌</option>
-                  <option v-for="item in brands" :key="item.value" :value="item.value">
-                    {{ item.label }}
-                  </option>
-                </select>
+                  <ElOption
+                    v-for="item in brands"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </ElSelect>
                 <small v-if="selectedBrand">当前：{{ selectedBrand.label }}</small>
                 <p v-if="optionData?.brandError" class="field-error">{{ optionData.brandError }}</p>
               </div>
@@ -640,26 +653,24 @@ watch(
               <div class="filter-field">
                 <label>价格区间</label>
                 <div class="price-range">
-                  <input
+                  <ElInputNumber
                     v-model="priceDraft.minimum"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputmode="decimal"
+                    :min="0"
+                    :step="1"
+                    :precision="2"
+                    :controls="false"
                     aria-label="最低价格"
                     placeholder="最低价"
-                    @keyup.enter="applyPriceFilter"
                   />
                   <span>—</span>
-                  <input
+                  <ElInputNumber
                     v-model="priceDraft.maximum"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    inputmode="decimal"
+                    :min="0"
+                    :step="1"
+                    :precision="2"
+                    :controls="false"
                     aria-label="最高价格"
                     placeholder="最高价"
-                    @keyup.enter="applyPriceFilter"
                   />
                 </div>
                 <p v-if="priceValidationMessage" class="field-error">{{ priceValidationMessage }}</p>
@@ -668,11 +679,19 @@ watch(
 
               <div class="filter-field">
                 <label for="catalog-sort">排列方式</label>
-                <select id="catalog-sort" :value="sort" @change="handleSortChange">
-                  <option v-for="item in sortOptions" :key="item.value" :value="item.value">
-                    {{ item.label }}
-                  </option>
-                </select>
+                <ElSelect
+                  id="catalog-sort"
+                  class="control-full"
+                  :model-value="sort"
+                  @change="handleSortChange"
+                >
+                  <ElOption
+                    v-for="item in sortOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </ElSelect>
               </div>
             </template>
 
@@ -730,9 +749,19 @@ watch(
             </div>
             <label>
               每页
-              <select :value="currentPageSize" @change="handlePageSizeChange">
-                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} 件</option>
-              </select>
+              <ElSelect
+                class="page-size-select"
+                :model-value="currentPageSize"
+                aria-label="每页商品数量"
+                @change="handlePageSizeChange"
+              >
+                <ElOption
+                  v-for="size in pageSizeOptions"
+                  :key="size"
+                  :label="`${size} 件`"
+                  :value="size"
+                />
+              </ElSelect>
             </label>
           </header>
 
@@ -975,37 +1004,19 @@ watch(
     font-weight: 650;
   }
 
-  select,
-  input {
-    width: 100%;
-    min-width: 0;
-    height: 40px;
-    padding: 0 11px;
-    color: var(--mall-color-text);
-    background: #fff;
-    border: 1px solid #dce3ec;
-    border-radius: 7px;
-    outline: none;
-    transition:
-      border-color 150ms ease,
-      box-shadow 150ms ease;
-
-    &:focus {
-      border-color: var(--mall-color-primary);
-      box-shadow: 0 0 0 3px rgb(23 104 215 / 10%);
-    }
-
-    &:disabled {
-      color: #98a3b3;
-      cursor: wait;
-      background: #f5f7fa;
-    }
-  }
-
   small {
     color: var(--mall-color-muted);
     font-size: 12px;
   }
+}
+
+.control-full {
+  width: 100%;
+}
+
+.filter-field :deep(.el-select__wrapper),
+.filter-field :deep(.el-input__wrapper) {
+  min-height: 40px;
 }
 
 .price-range {
@@ -1018,8 +1029,8 @@ watch(
     color: #9aa4b3;
   }
 
-  input {
-    padding: 0 8px;
+  :deep(.el-input-number) {
+    width: 100%;
   }
 }
 
@@ -1196,14 +1207,10 @@ watch(
     white-space: nowrap;
   }
 
-  select {
-    height: 36px;
-    padding: 0 9px;
-    color: var(--mall-color-text);
-    background: #fff;
-    border: 1px solid #dce3ec;
-    border-radius: 7px;
-  }
+}
+
+.page-size-select {
+  width: 96px;
 }
 
 .product-grid {

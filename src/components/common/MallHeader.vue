@@ -134,23 +134,29 @@ function searchHotKeyword(keyword: string): void {
         <div class="search-area">
           <form class="search-box" role="search" @submit.prevent="handleSearch">
             <label class="sr-only" for="mall-search">搜索商品</label>
-            <span class="search-box__scope" aria-hidden="true">全部商品</span>
-            <input
+            <ElInput
               id="mall-search"
               v-model="searchKeyword"
               class="search-box__input"
               type="search"
               maxlength="200"
               autocomplete="off"
+              clearable
               placeholder="请输入型号、品牌、参数或商品名称"
-            />
-            <button class="search-box__button" type="submit" aria-label="搜索">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="6.5" />
-                <path d="m16 16 4 4" />
-              </svg>
-              <span>搜索</span>
-            </button>
+            >
+              <template #prepend>
+                <span class="search-box__scope">全部商品</span>
+              </template>
+              <template #append>
+                <ElButton class="search-box__button" native-type="submit" aria-label="搜索">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6.5" />
+                    <path d="m16 16 4 4" />
+                  </svg>
+                  <span>搜索</span>
+                </ElButton>
+              </template>
+            </ElInput>
           </form>
 
           <div class="hot-keywords" aria-label="热门搜索">
@@ -295,6 +301,12 @@ function searchHotKeyword(keyword: string): void {
   background: linear-gradient(145deg, #3188ef, #0d58c5);
   border-radius: 7px 18px 7px 18px;
   box-shadow: 0 10px 24px rgb(23 104 215 / 24%);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.brand:hover .brand__symbol {
+  box-shadow: 0 14px 30px rgb(23 104 215 / 30%);
+  transform: translateY(-2px) rotate(-2deg);
 }
 
 .brand__text {
@@ -319,54 +331,62 @@ function searchHotKeyword(keyword: string): void {
 }
 
 .search-box {
-  display: grid;
-  grid-template-columns: 106px minmax(0, 1fr) 112px;
   height: 46px;
-  overflow: hidden;
-  border: 2px solid var(--header-primary);
-  border-radius: 4px;
-}
-
-.search-box__scope,
-.search-box__input,
-.search-box__button {
-  min-width: 0;
-  border: 0;
-  outline: 0;
-}
-
-.search-box__scope {
-  display: grid;
-  align-items: center;
-  padding: 0 13px;
-  color: #596579;
-  background: #fff;
-  border-right: 1px solid #e6eaf0;
-  cursor: pointer;
 }
 
 .search-box__input {
-  padding: 0 17px;
-  color: #26334a;
-  background: #fff;
-
-  &::placeholder {
-    color: #a2aab5;
-  }
+  width: 100%;
 }
 
-.search-box__button {
+.search-box__scope {
+  color: #596579;
+}
+
+:deep(.search-box__input .el-input__wrapper) {
+  min-height: 46px;
+  border-top: 2px solid var(--header-primary);
+  border-bottom: 2px solid var(--header-primary);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:deep(.search-box__input .el-input-group__prepend) {
+  min-width: 106px;
+  padding: 0 13px;
+  background: #fff;
+  border: 2px solid var(--header-primary);
+  border-right: 1px solid var(--mall-color-border);
+  border-radius: 6px 0 0 6px;
+  box-shadow: none;
+}
+
+:deep(.search-box__input .el-input-group__append) {
+  padding: 0;
+  overflow: hidden;
+  background: var(--header-primary);
+  border: 2px solid var(--header-primary);
+  border-radius: 0 6px 6px 0;
+  box-shadow: none;
+}
+
+:deep(.search-box__button.el-button) {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: center;
+  width: 112px;
+  height: 42px;
+  margin: 0;
   color: #fff;
   font-weight: 700;
   background: var(--header-primary);
+  border: 0;
+  border-radius: 0;
   cursor: pointer;
   transition: background 160ms ease;
 
   &:hover {
+    color: #fff;
     background: var(--header-primary-dark);
   }
 
@@ -425,8 +445,9 @@ function searchHotKeyword(keyword: string): void {
 
   &:hover {
     color: var(--header-primary);
-    background: #f7fbff;
-    border-color: #9fc3f0;
+    background: var(--mall-color-primary-light);
+    border-color: var(--mall-color-primary-border);
+    transform: translateY(-1px);
   }
 
   svg {
@@ -510,7 +531,7 @@ function searchHotKeyword(keyword: string): void {
 
     &:hover {
       color: var(--header-primary);
-      background: #f5f9ff;
+      background: var(--mall-color-primary-light);
     }
   }
 }
@@ -587,12 +608,22 @@ function searchHotKeyword(keyword: string): void {
   }
 
   .search-box {
-    grid-template-columns: minmax(0, 1fr) 88px;
     height: 44px;
   }
 
-  .search-box__scope {
+  :deep(.search-box__input .el-input-group__prepend) {
     display: none;
+  }
+
+  :deep(.search-box__input .el-input__wrapper) {
+    min-height: 44px;
+    border-left: 2px solid var(--header-primary);
+    border-radius: 6px 0 0 6px;
+  }
+
+  :deep(.search-box__button.el-button) {
+    width: 88px;
+    height: 40px;
   }
 
   .hot-keywords {

@@ -17,6 +17,9 @@
   --mall-color-page: #{$color-page-background};
   --mall-color-surface: #{$color-surface};
   --mall-color-surface-muted: #f8fafc;
+  --mall-color-primary-soft: #eaf3ff;
+  --mall-color-primary-border: #b3cef4;
+  --mall-color-primary-glow: rgb(23 104 215 / 16%);
 
   // 内容宽度和页面留白同时覆盖手机、平板、1K 与 2K 屏幕。
   --mall-content-max: 1800px;
@@ -41,6 +44,11 @@
   --el-border-radius-base: 8px;
   --el-border-radius-small: 6px;
   --el-border-color: #{$color-border};
+  --el-border-color-light: #efe7ed;
+  --el-fill-color-light: #f5f8fc;
+  --el-fill-color-lighter: #fafbfc;
+  --el-text-color-primary: #{$color-text-primary};
+  --el-text-color-regular: #5f5363;
 
   color: $color-text-primary;
   font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -103,6 +111,55 @@ a {
 ::selection {
   color: #fff;
   background: $color-primary;
+}
+
+// 路由切换与浮层使用同一套轻盈动效，减少页面跳变但不拖慢操作反馈。
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.el-button,
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner,
+.el-date-editor,
+.el-dialog,
+.el-message {
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.el-button:not(.is-disabled):active {
+  transform: translateY(1px);
+}
+
+.el-overlay-dialog {
+  animation: mall-overlay-in 180ms ease-out;
+}
+
+@keyframes mall-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 640px) {

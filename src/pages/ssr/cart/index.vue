@@ -600,7 +600,7 @@ onMounted(() => void loadCarts())
   justify-content: space-between;
   min-height: 116px;
   padding: 24px 28px;
-  background: linear-gradient(110deg, #fff, #f5f9ff);
+  background: linear-gradient(110deg, #fff, var(--mall-color-primary-light));
   border: 1px solid var(--mall-color-border);
   border-radius: var(--mall-radius-large);
   box-shadow: var(--mall-shadow-card);
@@ -697,7 +697,7 @@ onMounted(() => void loadCarts())
       font-size: 9px;
       font-style: normal;
       background: #fff;
-      border: 1px solid #b9d2f4;
+      border: 1px solid var(--mall-color-primary-border);
       border-radius: 3px;
     }
   }

@@ -965,7 +965,7 @@ async function handleLogout(): Promise<void> {
     color: var(--mall-color-primary);
     font-size: 12px;
     text-decoration: none;
-    border: 1px solid #a9c9f1;
+    border: 1px solid var(--mall-color-primary-border);
     border-radius: 5px;
   }
 }

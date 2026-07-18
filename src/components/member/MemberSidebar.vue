@@ -57,8 +57,8 @@ const memberLinks = [
   gap: 13px;
   align-items: center;
   padding: 22px 18px;
-  background: linear-gradient(135deg, #f5f9ff, #edf5ff);
-  border-bottom: 1px solid #e4eefb;
+  background: linear-gradient(135deg, #fff, var(--mall-color-primary-light));
+  border-bottom: 1px solid var(--mall-color-primary-border);
 
   > div:last-child {
     display: grid;
@@ -88,8 +88,8 @@ const memberLinks = [
   height: 44px;
   color: #fff;
   font-weight: 800;
-  background: linear-gradient(145deg, #4d9af0, var(--mall-color-primary));
-  border: 4px solid #dcecff;
+  background: linear-gradient(145deg, var(--mall-color-accent), var(--mall-color-primary));
+  border: 4px solid var(--mall-color-primary-soft);
   border-radius: 50%;
 }
 
@@ -107,7 +107,7 @@ const memberLinks = [
     color: #526074;
     text-decoration: none;
     border-radius: 7px;
-    transition: color 160ms ease, background 160ms ease;
+    transition: color 180ms ease, background 180ms ease, transform 180ms ease;
 
     > span {
       display: grid;
@@ -135,6 +135,7 @@ const memberLinks = [
     &.router-link-active {
       color: var(--mall-color-primary);
       background: var(--mall-color-primary-light);
+      transform: translateX(2px);
 
       > span {
         color: #fff;

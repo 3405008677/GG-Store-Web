@@ -82,7 +82,13 @@
     border: 0;
     border-radius: 4px;
     box-shadow: 0 10px 22px rgb(6 47 110 / 18%);
+    transition: transform 180ms ease, box-shadow 180ms ease;
     cursor: pointer;
+
+    &:hover {
+      box-shadow: 0 14px 28px rgb(6 47 110 / 24%);
+      transform: translateY(-2px);
+    }
   }
 }
 

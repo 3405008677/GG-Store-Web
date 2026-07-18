@@ -21,7 +21,7 @@ useHead(() => ({
     <NuxtLoadingIndicator color="#1768d7" :height="3" />
     <!-- 页面布局由各路由的 definePageMeta 决定；认证页使用 false，会员页使用 member。 -->
     <NuxtLayout>
-      <NuxtPage />
+      <NuxtPage :transition="{ name: 'page', mode: 'out-in' }" />
     </NuxtLayout>
   </ElConfigProvider>
 </template>

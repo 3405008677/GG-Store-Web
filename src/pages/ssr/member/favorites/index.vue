@@ -461,7 +461,7 @@ onMounted(() => void loadLists())
   justify-content: space-between;
   min-height: 116px;
   padding: 24px 28px;
-  background: linear-gradient(110deg, #fff, #f5f9ff);
+  background: linear-gradient(110deg, #fff, var(--mall-color-primary-light));
   border: 1px solid var(--mall-color-border);
   border-radius: var(--mall-radius-large);
   box-shadow: var(--mall-shadow-card);
@@ -558,7 +558,7 @@ onMounted(() => void loadLists())
       font-size: 9px;
       font-style: normal;
       background: #fff;
-      border: 1px solid #b9d2f4;
+      border: 1px solid var(--mall-color-primary-border);
       border-radius: 3px;
     }
   }
@@ -694,7 +694,7 @@ onMounted(() => void loadLists())
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 
   &:hover {
-    border-color: #b9d2f4;
+    border-color: var(--mall-color-primary-border);
     box-shadow: 0 12px 25px rgb(37 50 73 / 10%);
     transform: translateY(-2px);
   }
@@ -771,7 +771,7 @@ onMounted(() => void loadLists())
   color: var(--mall-color-primary);
   font-size: 11px;
   background: #fff;
-  border: 1px solid #b9d2f4;
+  border: 1px solid var(--mall-color-primary-border);
   border-radius: 4px;
   cursor: pointer;
 

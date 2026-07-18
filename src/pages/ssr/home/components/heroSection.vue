@@ -333,8 +333,8 @@ const memberNavigation = [
 .hero-section {
   padding: 14px 0 0;
   background:
-    linear-gradient(180deg, #f0f6ff 0, #f5f7fa 290px, #f4f6f9 100%),
-    #f4f6f9;
+    linear-gradient(180deg, #f0f6ff 0, #f5f7fa 290px, var(--mall-color-page) 100%),
+    var(--mall-color-page);
 }
 
 .hero-grid {
@@ -371,7 +371,7 @@ const memberNavigation = [
 
   &:hover {
     color: var(--mall-primary);
-    background: #f1f7ff;
+    background: var(--mall-color-primary-light);
   }
 
   small {
@@ -415,7 +415,7 @@ const memberNavigation = [
   height: clamp(300px, 20vw, 390px);
   overflow: hidden;
   color: #fff;
-  background: #1768d7;
+  background: var(--mall-color-primary);
   border-radius: 3px;
   box-shadow: 0 12px 35px rgb(22 78 159 / 18%);
   outline: none;
@@ -556,6 +556,12 @@ const memberNavigation = [
     background: #fff;
     border-radius: 3px;
     box-shadow: 0 8px 22px rgb(4 45 105 / 18%);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+
+    &:hover {
+      box-shadow: 0 12px 28px rgb(4 45 105 / 24%);
+      transform: translateY(-2px);
+    }
   }
 }
 
@@ -752,7 +758,7 @@ const memberNavigation = [
 
   &:hover {
     color: var(--mall-primary);
-    background: #f7fbff;
+    background: var(--mall-color-primary-light);
   }
 
   > span {
@@ -764,7 +770,7 @@ const memberNavigation = [
     color: var(--mall-primary);
     font-size: 9px;
     font-weight: 850;
-    background: #edf5ff;
+    background: var(--mall-color-primary-light);
     border-radius: 9px;
   }
 
@@ -818,8 +824,8 @@ const memberNavigation = [
   color: #fff;
   font-size: 15px;
   font-weight: 850;
-  background: linear-gradient(145deg, #50a4ef, #1768d7);
-  border: 5px solid #eaf4ff;
+  background: linear-gradient(145deg, var(--mall-color-accent), var(--mall-color-primary));
+  border: 5px solid var(--mall-color-primary-soft);
   border-radius: 50%;
 }
 
@@ -835,7 +841,7 @@ const memberNavigation = [
     color: var(--mall-primary);
     font-size: 11px;
     text-decoration: none;
-    border: 1px solid #a9c9f1;
+    border: 1px solid var(--mall-color-primary-border);
     border-radius: 3px;
 
     &:first-child {

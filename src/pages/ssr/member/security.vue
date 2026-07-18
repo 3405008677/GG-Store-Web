@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormInstance, FormItemRule, FormRules } from 'element-plus'
-import { ElMessage } from 'element-plus'
+import { ElAlert, ElMessage } from 'element-plus'
 import { changePassword } from '@/api/login'
 import { useStores } from '@/stores'
 import type { ChangePasswordFormData } from '@/types/auth'
@@ -212,7 +212,7 @@ async function handleSubmit(): Promise<void> {
 .page-heading {
   min-height: 116px;
   padding: 24px 28px;
-  background: linear-gradient(110deg, #fff, #f5f9ff);
+  background: linear-gradient(110deg, #fff, var(--mall-color-primary-light));
 
   > div > span {
     color: var(--mall-color-primary);
