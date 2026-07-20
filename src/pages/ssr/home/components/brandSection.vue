@@ -1,6 +1,16 @@
 <script setup lang="ts">
-/** 品牌名称仅用于首页视觉占位，真实品牌列表后续由商品服务返回。 */
-const brands = ['ST', 'NXP', 'TI', 'MPS', 'Nordic', 'ESPRESSIF', 'PANASONIC', 'EPSON', 'BOURNS', 'EVERLIGHT', 'SUNLORD', 'YAGEO'] as const
+import type { ProductBrandSelectItemResponse } from '@/api/catalog/types'
+
+const props = withDefaults(
+  defineProps<{
+    brands?: readonly ProductBrandSelectItemResponse[]
+  }>(),
+  {
+    brands: () => [],
+  },
+)
+
+const visibleBrands = computed(() => props.brands.slice(0, 12))
 </script>
 
 <template>
@@ -8,19 +18,32 @@ const brands = ['ST', 'NXP', 'TI', 'MPS', 'Nordic', 'ESPRESSIF', 'PANASONIC', 'E
     <div class="page-container">
       <header class="section-heading">
         <div>
-          <span>AUTHORIZED BRANDS</span>
+          <span>AVAILABLE BRANDS</span>
           <h2>品牌专区</h2>
         </div>
-        <a href="#brands">查看更多品牌 <span>→</span></a>
+        <NuxtLink to="/products">查看更多品牌 <span>→</span></NuxtLink>
       </header>
 
-      <div class="brand-grid">
-        <a v-for="(brand, index) in brands" :key="brand" href="#products" class="brand-card">
+      <div v-if="visibleBrands.length" class="brand-grid">
+        <NuxtLink
+          v-for="(brand, index) in visibleBrands"
+          :key="brand.value"
+          :to="{ path: '/products', query: { brandId: brand.value } }"
+          class="brand-card"
+        >
           <span>{{ String(index + 1).padStart(2, '0') }}</span>
-          <strong>{{ brand }}</strong>
-          <small>品牌现货专区</small>
-        </a>
+          <img
+            v-if="brand.logoUrl"
+            :src="brand.logoUrl"
+            :alt="brand.label"
+            loading="lazy"
+            decoding="async"
+          />
+          <strong v-else>{{ brand.label }}</strong>
+          <small>浏览品牌商品</small>
+        </NuxtLink>
       </div>
+      <div v-else class="brand-empty">品牌数据暂不可用，请稍后刷新。</div>
     </div>
   </section>
 </template>
@@ -96,8 +119,9 @@ const brands = ['ST', 'NXP', 'TI', 'MPS', 'Nordic', 'ESPRESSIF', 'PANASONIC', 'E
   &:hover {
     z-index: 2;
     color: var(--mall-primary);
-    background: #f8fbff;
+    background: var(--mall-color-primary-light);
     box-shadow: 0 10px 24px rgb(43 67 99 / 8%);
+    transform: translateY(-2px);
   }
 
   > span {
@@ -114,11 +138,28 @@ const brands = ['ST', 'NXP', 'TI', 'MPS', 'Nordic', 'ESPRESSIF', 'PANASONIC', 'E
     letter-spacing: 0.02em;
   }
 
+  img {
+    width: min(110px, 68%);
+    height: 34px;
+    margin-top: 8px;
+    object-fit: contain;
+  }
+
   small {
     margin-top: -12px;
     color: #a2a9b3;
     font-size: 9px;
   }
+}
+
+.brand-empty {
+  display: grid;
+  place-items: center;
+  min-height: 104px;
+  color: var(--mall-muted);
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--mall-border);
 }
 
 @media (max-width: 1120px) {

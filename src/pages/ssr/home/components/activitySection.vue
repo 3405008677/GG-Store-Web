@@ -5,15 +5,16 @@ interface ActivityCard {
   title: string
   description: string
   action: string
+  to: string
   theme: 'blue' | 'orange' | 'cyan' | 'purple'
 }
 
 /** 活动专区使用不同色彩区分采购场景。 */
 const activityCards: readonly ActivityCard[] = [
-  { eyebrow: 'SPOT GOODS', title: '现货特惠专区', description: '精选常用物料，阶梯价格更省', action: '立即选购', theme: 'blue' },
-  { eyebrow: 'NEW CUSTOMER', title: '新人采购礼包', description: '注册即领优惠券与免邮权益', action: '领取礼包', theme: 'orange' },
-  { eyebrow: 'STOCK SERVICE', title: '长期备货计划', description: '稳定供货，按需分批提货', action: '提交需求', theme: 'cyan' },
-  { eyebrow: 'INDUSTRIAL', title: '工业品爆款', description: '工具、仪表、自动化一站购齐', action: '查看专区', theme: 'purple' },
+  { eyebrow: 'AVAILABLE NOW', title: '全部可售商品', description: '查看当前已上架且存在可售 SKU 的商品', action: '立即浏览', to: '/products', theme: 'blue' },
+  { eyebrow: 'NEW ARRIVALS', title: '最新上架', description: '按 Catalog 服务的上架时间查看新品', action: '查看新品', to: '/products?sort=3', theme: 'orange' },
+  { eyebrow: 'BRAND DIRECTORY', title: '品牌专区', description: '使用后端启用品牌快速筛选商品', action: '选择品牌', to: '/#brands', theme: 'cyan' },
+  { eyebrow: 'SEARCH RANKING', title: '搜索热榜', description: '查看真实商品选择累计形成的排行榜', action: '查看热榜', to: '/products', theme: 'purple' },
 ]
 </script>
 
@@ -25,7 +26,7 @@ const activityCards: readonly ActivityCard[] = [
           <span>POPULAR ACTIVITIES</span>
           <h2>热门活动专区</h2>
         </div>
-        <p>覆盖现货特惠、新客权益、备货与工业品采购场景</p>
+        <p>所有入口均由当前 Catalog、Cart 与会员接口提供数据</p>
       </header>
 
       <div class="activity-grid">
@@ -33,7 +34,7 @@ const activityCards: readonly ActivityCard[] = [
           <span>{{ item.eyebrow }}</span>
           <h3>{{ item.title }}</h3>
           <p>{{ item.description }}</p>
-          <a href="#products">{{ item.action }} <span>→</span></a>
+          <NuxtLink :to="item.to">{{ item.action }} <span>→</span></NuxtLink>
           <div class="activity-card__decoration" aria-hidden="true">
             <i />
             <i />
@@ -94,8 +95,8 @@ const activityCards: readonly ActivityCard[] = [
 }
 
 .activity-card {
-  --activity-color: #1768d7;
-  --activity-light: #ecf5ff;
+  --activity-color: var(--mall-color-primary);
+  --activity-light: var(--mall-color-primary-light);
 
   position: relative;
   min-height: 168px;

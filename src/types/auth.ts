@@ -18,6 +18,60 @@ export interface LoginRequest extends LoginFormData {
   deviceId: string
 }
 
+/**
+ * 注册页面维护的字段。
+ *
+ * confirmPassword 和 agreed 只用于前端交互校验，不会进入认证密文或发送给后端。
+ */
+export interface RegisterFormData {
+  /** 唯一登录名，后端按 Unicode NFKC 规范化后校验。 */
+  username: string
+  /** 商城内展示的会员名称。 */
+  displayName: string
+  /** 唯一电子邮箱，同时可用于后续登录。 */
+  email: string
+  /** 可选手机号；填写后也可作为登录账号。 */
+  phoneNumber: string
+  /** 仅短暂保存在当前注册页面内存中的原始密码。 */
+  password: string
+  /** 仅用于浏览器端确认两次密码输入一致。 */
+  confirmPassword: string
+  /** 用户是否已确认注册协议与隐私政策。 */
+  agreed: boolean
+}
+
+/** 注册密文内部的明文载荷；确认密码和协议勾选不会提交。 */
+export interface RegisterRequest {
+  username: string
+  displayName: string
+  email: string
+  phoneNumber?: string
+  password: string
+  /** 注册成功后创建首个刷新会话时使用的浏览器设备标识。 */
+  deviceId: string
+}
+
+/** 修改密码页面维护的浏览器端字段。 */
+export interface ChangePasswordFormData {
+  /** 当前登录密码，仅短暂保存在页面内存。 */
+  currentPassword: string
+  /** 符合注册密码规则的新密码。 */
+  newPassword: string
+  /** 只用于浏览器端二次确认，不会提交给后端。 */
+  confirmPassword: string
+}
+
+/** 修改密码密文内部的明文载荷；确认密码不会提交。 */
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
+/** 修改密码成功后后端会撤销所有会话，当前值固定为 true。 */
+export interface ChangePasswordResponse {
+  requiresLogin: boolean
+}
+
 /** `GET /UserManage/Auth/LoginEncryption` 返回的一次性加密挑战。 */
 export interface LoginEncryptionChallengeResponse {
   /** 当前登录 RSA 密钥标识，提交密文时必须原样返回。 */
@@ -38,7 +92,7 @@ export interface LoginEncryptionChallengeResponse {
   expiresAtUtc: string
 }
 
-/** `POST /UserManage/Auth/Login` 实际发送的混合加密信封。 */
+/** 登录或注册接口实际发送的混合加密信封。 */
 export interface EncryptedLoginRequest {
   keyId: string
   challenge: string

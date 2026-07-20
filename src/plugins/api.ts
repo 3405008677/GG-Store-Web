@@ -1,4 +1,6 @@
 import type { ApiClient } from '@/api/request'
+import type { Pinia } from 'pinia'
+import type { Router } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { createApiClient } from '@/api/request'
 import { LOGIN_PATH } from '@/config/app'
@@ -13,7 +15,11 @@ import { isSessionRefreshBlocked } from '@/utils/core/storage'
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig()
   // 插件显式传入当前应用 Pinia，防止服务端请求之间误用其他实例。
-  const { userStore } = useStores(nuxtApp.$pinia)
+  const { userStore } = useStores(nuxtApp.$pinia as Pinia)
+  const router = nuxtApp.$router as Router
+  const i18n = nuxtApp.$i18n as {
+    t: (key: string, fallback?: string) => unknown
+  }
 
   // 刷新回调必须复用同一个客户端，因此先声明变量，再在客户端配置闭包中引用。
   let api: ApiClient
@@ -26,7 +32,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     sessionExpiredTask = (async () => {
       // 刷新后仍返回 401 说明凭证链不可再用；推进代次可同步淘汰其他标签页的迟到响应。
       userStore.expireSession()
-      const currentRoute = nuxtApp.$router.currentRoute.value
+      const currentRoute = router.currentRoute.value
       if (currentRoute.path !== LOGIN_PATH) {
         await nuxtApp.runWithContext(() =>
           navigateTo(
@@ -46,16 +52,30 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   api = createApiClient({
-    baseURL: config.public.apiBase,
+    baseURL:
+      import.meta.server && config.apiBase
+        ? String(config.apiBase)
+        : config.public.apiBase,
     getAuthorization: () => userStore.authorizationHeader,
+    // 写操作不能依赖 401 后重放，发送前先检查短效 Token 并按需使用
+    // HttpOnly Refresh Cookie 恢复会话。
+    prepareSession: () => userStore.ensureSession(api),
     // Store 自带 single-flight；成功后请求层从 getAuthorization 读取新 Bearer 并重放一次。
     refreshSession: (rejectedAuthorization) => userStore.refreshSession(api, rejectedAuthorization),
     isSessionRefreshBlocked,
-    translate: (key, fallback) => String(nuxtApp.$i18n.t(key, fallback)),
+    translate: (key, fallback) => String(i18n.t(key, fallback)),
     // SSR 不传 notifier，确保 isShown 只表示浏览器确实展示或抑制了消息。
     notifyError: import.meta.client ? (message) => ElMessage.error(message) : undefined,
     onSessionExpired: handleSessionExpired,
   })
+
+  if (import.meta.client) {
+    // 首页等公开 SSR 页面不会进入鉴权中间件；等首次水合完成后再通过 HttpOnly
+    // Refresh Cookie 恢复内存会话，既能刷新出会员信息，也不会造成 SSR 水合不一致。
+    nuxtApp.hook('app:mounted', () => {
+      void userStore.ensureSession(api)
+    })
+  }
 
   return { provide: { api } }
 })

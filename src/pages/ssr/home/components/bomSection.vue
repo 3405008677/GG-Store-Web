@@ -1,19 +1,12 @@
-<script setup lang="ts">
-/** BOM 区块只抛出用户意图，由首页决定提示、跳转或打开上传面板。 */
-const emit = defineEmits<{
-  action: [action: 'bom']
-}>()
-</script>
-
 <template>
   <section id="bom-service" class="bom-section">
     <div class="page-container bom-card">
       <div>
-        <span>SMART BOM SERVICE</span>
-        <h2>上传 BOM，快速完成多型号配单</h2>
-        <p>自动识别型号与数量，推荐现货和可替代物料，提高研发与采购效率。</p>
+        <span>LIVE PRODUCT CATALOG</span>
+        <h2>浏览当前真实可售商品</h2>
+        <p>目录、SKU 价格和库存均来自 Catalog 服务，结算能力开放前不会创建模拟订单。</p>
       </div>
-      <button type="button" @click="emit('action', 'bom')">上传 BOM 文件</button>
+      <NuxtLink to="/products">进入商品目录</NuxtLink>
     </div>
   </section>
 </template>
@@ -75,18 +68,27 @@ const emit = defineEmits<{
     font-size: 12px;
   }
 
-  button {
+  a {
     position: relative;
     z-index: 2;
+    display: grid;
+    place-items: center;
     min-width: 148px;
     height: 44px;
     color: var(--mall-primary-dark);
     font-weight: 700;
+    text-decoration: none;
     background: #fff;
     border: 0;
     border-radius: 4px;
     box-shadow: 0 10px 22px rgb(6 47 110 / 18%);
+    transition: transform 180ms ease, box-shadow 180ms ease;
     cursor: pointer;
+
+    &:hover {
+      box-shadow: 0 14px 28px rgb(6 47 110 / 24%);
+      transform: translateY(-2px);
+    }
   }
 }
 
@@ -99,7 +101,7 @@ const emit = defineEmits<{
       max-width: 72%;
     }
 
-    button {
+    a {
       position: absolute;
       right: 26px;
       bottom: 26px;
@@ -122,7 +124,7 @@ const emit = defineEmits<{
       line-height: 1.6;
     }
 
-    button {
+    a {
       position: relative;
       right: auto;
       bottom: auto;

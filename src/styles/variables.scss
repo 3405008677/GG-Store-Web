@@ -1,3 +1,17 @@
-$color-primary: #26745f;
-$color-text-primary: #172b24;
-$color-page-background: #f4f7f3;
+// 品牌色：全站按钮、链接、选中态和聚焦态统一使用商城蓝。
+$color-primary: #1768d7;
+$color-primary-dark: #0f54b7;
+$color-primary-light: #eaf3ff;
+$color-accent: #20a7e8;
+
+// 反馈色：成功、提醒和危险操作保持固定语义，业务页面不再单独定义。
+$color-success: #22a06b;
+$color-warning: #f39a2e;
+$color-danger: #e5484d;
+
+// 中性色：文字、边框、页面背景与卡片表面构成默认蓝白浅色主题。
+$color-text-primary: #253249;
+$color-text-secondary: #6f7b8d;
+$color-border: #e4e9f0;
+$color-page-background: #f4f6f9;
+$color-surface: #ffffff;

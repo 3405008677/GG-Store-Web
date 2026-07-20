@@ -6,9 +6,14 @@
 export type {
   AccessTokenResponse,
   AuthUser,
+  ChangePasswordFormData,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   EncryptedLoginRequest,
   LoginEncryptionChallengeResponse,
   LoginFormData,
   LoginRequest,
+  RegisterFormData,
+  RegisterRequest,
   RefreshSessionRequest,
 } from '@/types/auth'
