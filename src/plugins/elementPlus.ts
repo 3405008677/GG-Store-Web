@@ -12,6 +12,8 @@ import {
   ElSelect,
   ElSkeleton,
   ElSwitch,
+  ID_INJECTION_KEY,
+  ZINDEX_INJECTION_KEY,
 } from 'element-plus'
 
 /**
@@ -21,6 +23,16 @@ import {
  * 组件样式仍由 nuxt.config.ts 统一引入，语言由 app.vue 的 ConfigProvider 控制。
  */
 export default defineNuxtPlugin((nuxtApp) => {
+  // Element Plus 的默认 ID 前缀是随机值，SSR 与客户端会因此生成不同的 DOM ID。
+  // 注入对象在每次 Nuxt 应用初始化时重新创建，避免 SSR 请求之间共享计数状态。
+  nuxtApp.vueApp.provide(ID_INJECTION_KEY, {
+    prefix: 1024,
+    current: 0,
+  })
+  nuxtApp.vueApp.provide(ZINDEX_INJECTION_KEY, {
+    current: 0,
+  })
+
   const components = [
     ElButton,
     ElCheckbox,
