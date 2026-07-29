@@ -8,10 +8,6 @@ dist
 coverage
 *.log
 
-.env
-.env.*
-!.env.example
-
 .DS_Store
 .idea
 .vscode
@@ -21,4 +17,4 @@ coverage
 *.sln
 *.sw?
 
-.package-lock.json
+package-lock.json
